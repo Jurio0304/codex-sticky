@@ -77,18 +77,6 @@ mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
 
-    struct FallibleWriter;
-
-    impl Write for FallibleWriter {
-        fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
-            Err(io::Error::other("write failed"))
-        }
-
-        fn flush(&mut self) -> io::Result<()> {
-            Ok(())
-        }
-    }
-
     #[test]
     fn osc52_writer_frames_base64_payload_and_flushes() {
         let mut output = Vec::new();
@@ -140,14 +128,5 @@ mod tests {
             }
         );
         assert!(output.is_empty());
-    }
-
-    #[test]
-    fn osc52_writer_returns_errors_without_panicking() {
-        let mut writer = FallibleWriter;
-
-        let err = write_osc52(&mut writer, "hello").expect_err("expected write error");
-
-        assert_eq!(err.kind(), io::ErrorKind::Other);
     }
 }

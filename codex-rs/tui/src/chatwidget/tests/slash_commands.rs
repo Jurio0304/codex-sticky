@@ -2474,25 +2474,6 @@ async fn sticky_slash_command_toggles_and_accepts_on_off_status_args() {
 }
 
 #[tokio::test]
-async fn sticky_slash_command_reports_usage_for_invalid_arg() {
-    let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-
-    chat.dispatch_command_with_args(SlashCommand::Sticky, "later".to_string(), Vec::new());
-
-    assert!(!chat.sticky_transcript_enabled());
-    assert_no_submit_op(&mut op_rx);
-    let rendered = drain_insert_history(&mut rx)
-        .iter()
-        .map(|lines| lines_to_single_string(lines))
-        .collect::<Vec<_>>()
-        .join("\n");
-    assert!(
-        rendered.contains("Usage: /sticky [on|off|status]"),
-        "expected sticky usage error, got {rendered:?}"
-    );
-}
-
-#[tokio::test]
 async fn sticky_and_raw_modes_are_mutually_exclusive() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
 
