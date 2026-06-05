@@ -8,24 +8,30 @@ and are not maintained, sponsored, or endorsed by OpenAI.
 Use:
 
 ```text
-v<upstream-version>-sticky.<revision>
+<upstream-version>-sticky.<revision>
 ```
 
 The upstream version must come from an official stable tag that was explicitly
-synced into Sticky main. For example, after syncing `rust-v0.138.0`, the first
-Sticky release would be `v0.138.0-sticky.1`. Preserve historical `v0.1.0`;
-never delete, overwrite, or reuse it for the new scheme.
+selected for a release branch or synced into Sticky main. For example, after
+selecting `rust-v0.138.0`, the first Sticky release would be
+`0.138.0-sticky.1`. `0.137.0` means the OpenAI Codex official `rust-v0.137.0`
+release; `-sticky.1` means the first Sticky enhanced release on top of that
+upstream version. Preserve historical `v0.1.0`; never delete, overwrite, or
+reuse it for the new scheme.
 
 The current Sticky `main` is an initial `upstream/main` migration, not a
 standard release based on `rust-v0.137.0`. Do not create a current release tag
-and do not name this code `v0.137.0-sticky.1`.
+and do not name this code `0.137.0-sticky.1`. Prepare `0.137.0-sticky.1` on a
+dedicated `release/0.137.0-sticky.1` branch based on `rust-v0.137.0`, then carry
+only the reviewed Sticky patchset, required tests, GNU release workflow,
+installer, and necessary fork docs.
 
 ## Preflight
 
 Before creating a release tag:
 
 ```bash
-bash scripts/sticky/check-release.sh v<upstream-version>-sticky.<revision>
+bash scripts/sticky/check-release.sh 0.137.0-sticky.1
 ```
 
 The script is only a guardrail. It must not push tags, create GitHub Releases,
@@ -55,7 +61,7 @@ Do not replace official `codex`. Install this fork side by side:
 
 ```bash
 mkdir -p ~/.local/bin
-tar -xzf codex-sticky-<release-tag>-x86_64-unknown-linux-gnu.tar.gz
+tar -xzf codex-sticky-<version>-x86_64-unknown-linux-gnu.tar.gz
 install -m 0755 codex-sticky ~/.local/bin/codex-sticky
 ~/.local/bin/codex-sticky
 ```

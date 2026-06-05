@@ -38,6 +38,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          bash -n scripts/install.sh
           bash -n scripts/sticky/*.sh
           python3 -m json.tool .sticky/upstream-base.json >/dev/null
           python3 - <<'PY'
