@@ -1,0 +1,71 @@
+name: sticky-ci
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+
+jobs:
+  checks:
+    name: Sticky checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: codex-rs
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Check Sticky maintenance files
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/sticky/*.sh
+          python3 -m json.tool .sticky/upstream-base.json >/dev/null
+          python3 - <<'PY'
+          import json
+
+          with open(".sticky/upstream-base.json", encoding="utf-8") as handle:
+              tag = json.load(handle)["latest_stable_tag"]["name"]
+          if not isinstance(tag, str) or not tag:
+              raise SystemExit("latest_stable_tag.name must be a non-empty string")
+          print(f"Sticky upstream baseline: {tag}")
+          PY
+      - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+        with:
+          components: rustfmt
+      - uses: taiki-e/install-action@44c6d64aa62cd779e873306675c7a58e86d6d532 # v2.62.49
+        with:
+          tool: just@1.51.0
+      - uses: taiki-e/install-action@44c6d64aa62cd779e873306675c7a58e86d6d532 # v2.62.49
+        with:
+          tool: nextest
+          version: 0.9.103
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.3"
+      - name: Check formatting
+        run: just fmt-check
+      - name: Test codex-tui
+        run: just test -p codex-tui
+      - name: Build codex
+        run: cargo build --release --bin codex
