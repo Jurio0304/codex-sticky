@@ -2420,6 +2420,116 @@ async fn raw_slash_command_reports_usage_for_invalid_arg() {
 }
 
 #[tokio::test]
+async fn sticky_slash_command_toggles_and_accepts_on_off_status_args() {
+    let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
+    chat.bottom_pane
+        .set_composer_text("draft text".to_string(), Vec::new(), Vec::new());
+
+    chat.dispatch_command(SlashCommand::Sticky);
+    assert!(chat.sticky_transcript_enabled());
+    assert_eq!(chat.bottom_pane.composer_text(), "draft text");
+    assert_no_submit_op(&mut op_rx);
+    let events = std::iter::from_fn(|| rx.try_recv().ok()).collect::<Vec<_>>();
+    assert!(events.iter().any(|event| matches!(
+        event,
+        AppEvent::StickyTranscriptModeChanged { enabled: true }
+    )));
+
+    chat.bottom_pane
+        .set_composer_text(String::new(), Vec::new(), Vec::new());
+    chat.dispatch_command_with_args(SlashCommand::Sticky, "status".to_string(), Vec::new());
+    assert!(chat.sticky_transcript_enabled());
+    assert_no_submit_op(&mut op_rx);
+    let status = drain_insert_history(&mut rx)
+        .iter()
+        .map(|lines| lines_to_single_string(lines))
+        .collect::<Vec<_>>()
+        .join("\n");
+    assert!(
+        status.contains("Sticky Transcript mode is on."),
+        "expected sticky status, got {status:?}"
+    );
+
+    chat.bottom_pane
+        .set_composer_text(String::new(), Vec::new(), Vec::new());
+    chat.dispatch_command_with_args(SlashCommand::Sticky, "off".to_string(), Vec::new());
+    assert!(!chat.sticky_transcript_enabled());
+    assert_no_submit_op(&mut op_rx);
+    let events = std::iter::from_fn(|| rx.try_recv().ok()).collect::<Vec<_>>();
+    assert!(events.iter().any(|event| matches!(
+        event,
+        AppEvent::StickyTranscriptModeChanged { enabled: false }
+    )));
+
+    chat.bottom_pane
+        .set_composer_text(String::new(), Vec::new(), Vec::new());
+    chat.dispatch_command_with_args(SlashCommand::Sticky, "on".to_string(), Vec::new());
+    assert!(chat.sticky_transcript_enabled());
+    assert_no_submit_op(&mut op_rx);
+    let events = std::iter::from_fn(|| rx.try_recv().ok()).collect::<Vec<_>>();
+    assert!(events.iter().any(|event| matches!(
+        event,
+        AppEvent::StickyTranscriptModeChanged { enabled: true }
+    )));
+}
+
+#[tokio::test]
+async fn sticky_slash_command_reports_usage_for_invalid_arg() {
+    let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
+
+    chat.dispatch_command_with_args(SlashCommand::Sticky, "later".to_string(), Vec::new());
+
+    assert!(!chat.sticky_transcript_enabled());
+    assert_no_submit_op(&mut op_rx);
+    let rendered = drain_insert_history(&mut rx)
+        .iter()
+        .map(|lines| lines_to_single_string(lines))
+        .collect::<Vec<_>>()
+        .join("\n");
+    assert!(
+        rendered.contains("Usage: /sticky [on|off|status]"),
+        "expected sticky usage error, got {rendered:?}"
+    );
+}
+
+#[tokio::test]
+async fn sticky_and_raw_modes_are_mutually_exclusive() {
+    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
+
+    chat.dispatch_command_with_args(SlashCommand::Raw, "on".to_string(), Vec::new());
+    assert!(chat.raw_output_mode());
+    chat.dispatch_command_with_args(SlashCommand::Sticky, "on".to_string(), Vec::new());
+    assert!(!chat.sticky_transcript_enabled());
+    let rendered = drain_insert_history(&mut rx)
+        .iter()
+        .map(|lines| lines_to_single_string(lines))
+        .collect::<Vec<_>>()
+        .join("\n");
+    assert!(
+        rendered
+            .contains("Sticky Transcript mode is unavailable while raw output mode is enabled."),
+        "expected sticky/raw conflict error, got {rendered:?}"
+    );
+
+    chat.dispatch_command_with_args(SlashCommand::Raw, "off".to_string(), Vec::new());
+    chat.dispatch_command_with_args(SlashCommand::Sticky, "on".to_string(), Vec::new());
+    assert!(chat.sticky_transcript_enabled());
+    chat.dispatch_command_with_args(SlashCommand::Raw, "on".to_string(), Vec::new());
+    assert!(chat.sticky_transcript_enabled());
+    assert!(!chat.raw_output_mode());
+    let rendered = drain_insert_history(&mut rx)
+        .iter()
+        .map(|lines| lines_to_single_string(lines))
+        .collect::<Vec<_>>()
+        .join("\n");
+    assert!(
+        rendered
+            .contains("Raw output mode is unavailable while Sticky Transcript mode is enabled."),
+        "expected raw/sticky conflict error, got {rendered:?}"
+    );
+}
+
+#[tokio::test]
 async fn compact_queues_user_messages_snapshot() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.thread_id = Some(ThreadId::new());

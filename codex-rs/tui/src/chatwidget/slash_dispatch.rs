@@ -35,6 +35,7 @@ const SIDE_SLASH_COMMAND_UNAVAILABLE_HINT: &str =
     "Press Ctrl+C to return to the main thread first.";
 const GOAL_USAGE_HINT: &str = "Example: /goal improve benchmark coverage";
 const RAW_USAGE: &str = "Usage: /raw [on|off]";
+const STICKY_USAGE: &str = "Usage: /sticky [on|off|status]";
 
 impl ChatWidget {
     /// Dispatch a bare slash command and record its staged local-history entry.
@@ -371,8 +372,14 @@ impl ChatWidget {
                 self.copy_last_agent_markdown();
             }
             SlashCommand::Raw => {
+                let before = self.raw_output_mode();
                 let enabled = self.toggle_raw_output_mode_and_notify();
-                self.emit_raw_output_mode_changed(enabled);
+                if enabled != before {
+                    self.emit_raw_output_mode_changed(enabled);
+                }
+            }
+            SlashCommand::Sticky => {
+                self.toggle_sticky_transcript_enabled_and_notify();
             }
             SlashCommand::Diff => {
                 self.add_diff_in_progress();
@@ -647,14 +654,38 @@ impl ChatWidget {
             },
             SlashCommand::Raw => match trimmed.to_ascii_lowercase().as_str() {
                 "on" => {
-                    self.set_raw_output_mode_and_notify(/*enabled*/ true);
-                    self.emit_raw_output_mode_changed(/*enabled*/ true);
+                    let enabled = self.set_raw_output_mode_and_notify(/*enabled*/ true);
+                    if enabled {
+                        self.emit_raw_output_mode_changed(enabled);
+                    }
                 }
                 "off" => {
-                    self.set_raw_output_mode_and_notify(/*enabled*/ false);
-                    self.emit_raw_output_mode_changed(/*enabled*/ false);
+                    let enabled = self.set_raw_output_mode_and_notify(/*enabled*/ false);
+                    if !enabled {
+                        self.emit_raw_output_mode_changed(enabled);
+                    }
                 }
                 _ => self.add_error_message(RAW_USAGE.to_string()),
+            },
+            SlashCommand::Sticky => match trimmed.to_ascii_lowercase().as_str() {
+                "on" => {
+                    self.set_sticky_transcript_enabled_and_notify(/*enabled*/ true);
+                }
+                "off" => {
+                    self.set_sticky_transcript_enabled_and_notify(/*enabled*/ false);
+                }
+                "status" => {
+                    let status = if self.sticky_transcript_enabled() {
+                        "on"
+                    } else {
+                        "off"
+                    };
+                    self.add_info_message(
+                        format!("Sticky Transcript mode is {status}."),
+                        /*hint*/ None,
+                    );
+                }
+                _ => self.add_error_message(STICKY_USAGE.to_string()),
             },
             SlashCommand::Rename if !trimmed.is_empty() => {
                 if !self.ensure_thread_rename_allowed() {
@@ -982,6 +1013,7 @@ impl ChatWidget {
             | SlashCommand::Rollout
             | SlashCommand::Copy
             | SlashCommand::Raw
+            | SlashCommand::Sticky
             | SlashCommand::Vim
             | SlashCommand::Diff
             | SlashCommand::App

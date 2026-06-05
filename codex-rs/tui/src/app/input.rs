@@ -78,10 +78,14 @@ impl App {
         enabled: bool,
         notify: bool,
     ) {
-        if notify {
-            self.chat_widget.set_raw_output_mode_and_notify(enabled);
+        let applied = if notify {
+            self.chat_widget.set_raw_output_mode_and_notify(enabled) == enabled
         } else {
-            self.chat_widget.set_raw_output_mode(enabled);
+            self.chat_widget.set_raw_output_mode(enabled) == enabled
+        };
+        if !applied {
+            tui.frame_requester().schedule_frame();
+            return;
         }
         if let Err(err) = self.reflow_transcript_now(tui) {
             tracing::warn!(error = %err, "failed to reflow transcript after raw output mode toggle");
@@ -89,6 +93,37 @@ impl App {
                 .add_error_message(format!("Failed to redraw transcript: {err}"));
         }
         tui.frame_requester().schedule_frame();
+    }
+
+    pub(super) fn apply_sticky_transcript_mode(&mut self, tui: &mut tui::Tui, enabled: bool) {
+        if let Err(err) = tui.set_sticky_mouse_capture_enabled(enabled) {
+            tracing::warn!(error = %err, "failed to update sticky transcript mouse capture");
+            self.chat_widget
+                .add_error_message(format!("Failed to update mouse capture: {err}"));
+        }
+        if enabled {
+            tui.clear_pending_history_lines();
+        } else if let Err(err) = self.reflow_transcript_now(tui) {
+            tracing::warn!(error = %err, "failed to reflow transcript after sticky transcript toggle");
+            self.chat_widget
+                .add_error_message(format!("Failed to redraw transcript: {err}"));
+        }
+        tui.frame_requester().schedule_frame();
+    }
+
+    pub(super) fn handle_mouse_event(
+        &mut self,
+        tui: &mut tui::Tui,
+        mouse_event: crossterm::event::MouseEvent,
+    ) {
+        if self.overlay.is_none()
+            && self.chat_widget.no_modal_or_popup_active()
+            && self
+                .chat_widget
+                .handle_sticky_transcript_mouse_event(mouse_event)
+        {
+            tui.frame_requester().schedule_frame();
+        }
     }
 
     pub(super) async fn handle_key_event(
@@ -163,6 +198,15 @@ impl App {
         {
             let enabled = !self.chat_widget.raw_output_mode();
             self.apply_raw_output_mode(tui, enabled, /*notify*/ false);
+            return;
+        }
+
+        if self.chat_widget.no_modal_or_popup_active()
+            && self
+                .chat_widget
+                .handle_sticky_transcript_key_event(key_event)
+        {
+            tui.frame_requester().schedule_frame();
             return;
         }
 

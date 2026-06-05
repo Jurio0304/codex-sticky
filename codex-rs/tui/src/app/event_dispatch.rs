@@ -45,6 +45,9 @@ impl App {
             AppEvent::RawOutputModeChanged { enabled } => {
                 self.apply_raw_output_mode(tui, enabled, /*notify*/ false);
             }
+            AppEvent::StickyTranscriptModeChanged { enabled } => {
+                self.apply_sticky_transcript_mode(tui, enabled);
+            }
             AppEvent::ClearUiAndSubmitUserMessage { text } => {
                 self.clear_terminal_ui(tui, /*redraw_header*/ false)?;
                 self.reset_app_ui_state_after_clear();
@@ -204,7 +207,11 @@ impl App {
                     tui.frame_requester().schedule_frame();
                 }
                 self.transcript_cells.push(cell.clone());
-                if self.initial_history_replay_buffer.as_ref().is_some() {
+                if self.chat_widget.sticky_transcript_enabled() {
+                    self.chat_widget.note_sticky_transcript_output_appended();
+                    tui.clear_pending_history_lines();
+                    tui.frame_requester().schedule_frame();
+                } else if self.initial_history_replay_buffer.as_ref().is_some() {
                     self.insert_history_cell_lines_with_initial_replay_buffer(
                         tui,
                         cell.as_ref(),

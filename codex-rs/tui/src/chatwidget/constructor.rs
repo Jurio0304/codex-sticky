@@ -106,6 +106,9 @@ impl ChatWidget {
             }),
             transcript: TranscriptState::new(active_cell),
             raw_output_mode: config.tui_raw_output_mode,
+            sticky_transcript: StickyTranscriptState::new(
+                config.tui_sticky_transcript && !config.tui_raw_output_mode,
+            ),
             config,
             effective_service_tier,
             skills_all: Vec::new(),
@@ -264,6 +267,12 @@ impl ChatWidget {
             .bottom_pane
             .set_connectors_enabled(widget.connectors_enabled());
         widget.refresh_status_surfaces();
+        if widget.config.tui_sticky_transcript && widget.config.tui_raw_output_mode {
+            widget.add_error_message(
+                "Sticky Transcript mode is unavailable while raw output mode is enabled."
+                    .to_string(),
+            );
+        }
 
         widget
     }

@@ -114,6 +114,7 @@ impl ChatWidget {
         }
         if !delta.is_empty() {
             self.record_visible_turn_activity();
+            self.note_sticky_transcript_output_appended();
         }
         if !self.transcript.plan_item_active {
             self.transcript.plan_item_active = true;
@@ -376,6 +377,7 @@ impl ChatWidget {
     pub(super) fn handle_streaming_delta(&mut self, delta: String) {
         if !delta.is_empty() {
             self.record_visible_turn_activity();
+            self.note_sticky_transcript_output_appended();
         }
         if self.stream_controller.is_none() {
             // Before starting an agent stream, flush any active exec cell group.

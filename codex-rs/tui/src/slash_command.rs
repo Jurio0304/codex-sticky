@@ -43,6 +43,7 @@ pub enum SlashCommand {
     Btw,
     Copy,
     Raw,
+    Sticky,
     Diff,
     Mention,
     Status,
@@ -95,6 +96,7 @@ impl SlashCommand {
             SlashCommand::Quit | SlashCommand::Exit => "exit Codex",
             SlashCommand::Copy => "copy last response as markdown",
             SlashCommand::Raw => "toggle raw scrollback mode for copy-friendly terminal selection",
+            SlashCommand::Sticky => "toggle sticky transcript mode",
             SlashCommand::Diff => "show git diff (including untracked files)",
             SlashCommand::Mention => "mention a file",
             SlashCommand::Skills => "use skills to improve how Codex performs specific tasks",
@@ -159,6 +161,7 @@ impl SlashCommand {
                 | SlashCommand::Keymap
                 | SlashCommand::Mcp
                 | SlashCommand::Raw
+                | SlashCommand::Sticky
                 | SlashCommand::Pets
                 | SlashCommand::Side
                 | SlashCommand::Btw
@@ -173,6 +176,7 @@ impl SlashCommand {
             self,
             SlashCommand::Copy
                 | SlashCommand::Raw
+                | SlashCommand::Sticky
                 | SlashCommand::Diff
                 | SlashCommand::Mention
                 | SlashCommand::Status
@@ -207,6 +211,7 @@ impl SlashCommand {
             SlashCommand::Diff
             | SlashCommand::Copy
             | SlashCommand::Raw
+            | SlashCommand::Sticky
             | SlashCommand::Rename
             | SlashCommand::Mention
             | SlashCommand::Skills
@@ -290,6 +295,9 @@ mod tests {
         assert!(SlashCommand::Raw.available_in_side_conversation());
         assert!(SlashCommand::Raw.supports_inline_args());
         assert!(SlashCommand::App.available_during_task());
+        assert!(SlashCommand::Sticky.available_during_task());
+        assert!(SlashCommand::Sticky.available_in_side_conversation());
+        assert!(SlashCommand::Sticky.supports_inline_args());
     }
 
     #[test]

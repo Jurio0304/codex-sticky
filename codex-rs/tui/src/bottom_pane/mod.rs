@@ -347,6 +347,11 @@ impl BottomPane {
         self.composer.record_pending_slash_command_history();
     }
 
+    pub(crate) fn show_footer_flash(&mut self, line: Line<'static>, duration: Duration) {
+        self.composer.show_footer_flash(line, duration);
+        self.request_redraw();
+    }
+
     /// Replace all bottom-pane keymap caches from one resolved runtime keymap.
     ///
     /// The bottom pane owns several input surfaces: composer, overlays, and

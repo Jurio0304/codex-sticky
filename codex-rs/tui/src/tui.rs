@@ -21,6 +21,7 @@ use crossterm::event::DisableFocusChange;
 use crossterm::event::EnableBracketedPaste;
 use crossterm::event::EnableFocusChange;
 use crossterm::event::KeyEvent;
+use crossterm::event::MouseEvent;
 use crossterm::terminal::EnterAlternateScreen;
 use crossterm::terminal::LeaveAlternateScreen;
 #[cfg(not(unix))]
@@ -59,10 +60,14 @@ mod frame_requester;
 #[cfg(unix)]
 mod job_control;
 mod keyboard_modes;
+mod sticky_mouse;
 mod terminal_stderr;
 
 /// Target frame interval for UI redraw scheduling.
 pub(crate) const TARGET_FRAME_INTERVAL: Duration = frame_rate_limiter::MIN_FRAME_INTERVAL;
+
+use sticky_mouse::DisableStickyMouseCapture;
+use sticky_mouse::EnableStickyMouseCapture;
 
 /// A type alias for the terminal type used in this application
 pub type Terminal = CustomTerminal<CrosstermBackend<Stdout>>;
@@ -86,6 +91,9 @@ fn should_emit_notification(condition: NotificationCondition, terminal_focused: 
 
 impl Drop for Tui {
     fn drop(&mut self) {
+        if self.sticky_mouse_capture_enabled {
+            let _ = execute!(self.terminal.backend_mut(), DisableStickyMouseCapture);
+        }
         if let Err(err) = self.clear_ambient_pet_image() {
             tracing::debug!(error = %err, "failed to clear ambient pet image on TUI drop");
         }
@@ -254,6 +262,9 @@ fn restore_common(
     }
 
     if let Err(err) = execute!(stdout(), DisableBracketedPaste) {
+        first_error.get_or_insert(err);
+    }
+    if let Err(err) = execute!(stdout(), DisableStickyMouseCapture) {
         first_error.get_or_insert(err);
     }
     let _ = execute!(stdout(), DisableFocusChange);
@@ -499,6 +510,8 @@ fn set_panic_hook() {
 pub enum TuiEvent {
     /// A terminal key event after focus, paste, and protocol bookkeeping has been handled.
     Key(KeyEvent),
+    /// A terminal mouse event. Ignored unless a feature explicitly consumes it.
+    Mouse(MouseEvent),
     /// A bracketed paste payload normalized by the app layer before it reaches the composer.
     Paste(String),
     /// A terminal size notification that should be handled as resize-sensitive draw work.
@@ -532,6 +545,8 @@ pub struct Tui {
     is_zellij: bool,
     // When false, enter_alt_screen() becomes a no-op.
     alt_screen_enabled: bool,
+    // Sticky transcript enables a local mouse protocol for wheel scrolling and drag selection.
+    sticky_mouse_capture_enabled: bool,
     // Keeps unmanaged process stderr writes out of the inline viewport.
     _stderr_guard: terminal_stderr::TerminalStderrGuard,
 }
@@ -585,6 +600,7 @@ impl Tui {
             notification_condition: NotificationCondition::default(),
             is_zellij,
             alt_screen_enabled: true,
+            sticky_mouse_capture_enabled: false,
             _stderr_guard: stderr_guard,
         }
     }
@@ -592,6 +608,26 @@ impl Tui {
     /// Set whether alternate screen is enabled. When false, enter_alt_screen() becomes a no-op.
     pub fn set_alt_screen_enabled(&mut self, enabled: bool) {
         self.alt_screen_enabled = enabled;
+    }
+
+    fn reapply_sticky_mouse_capture(&mut self) -> Result<()> {
+        if self.sticky_mouse_capture_enabled {
+            execute!(self.terminal.backend_mut(), EnableStickyMouseCapture)?;
+        }
+        Ok(())
+    }
+
+    pub fn set_sticky_mouse_capture_enabled(&mut self, enabled: bool) -> Result<()> {
+        if self.sticky_mouse_capture_enabled == enabled {
+            return Ok(());
+        }
+        if enabled {
+            execute!(self.terminal.backend_mut(), EnableStickyMouseCapture)?;
+        } else {
+            execute!(self.terminal.backend_mut(), DisableStickyMouseCapture)?;
+        }
+        self.sticky_mouse_capture_enabled = enabled;
+        Ok(())
     }
 
     pub fn set_notification_settings(
@@ -659,6 +695,11 @@ impl Tui {
         }
         if let Err(err) = set_modes() {
             tracing::warn!("failed to re-enable terminal modes after external program: {err}");
+        }
+        if let Err(err) = self.reapply_sticky_mouse_capture() {
+            tracing::warn!(
+                "failed to re-enable sticky mouse capture after external program: {err}"
+            );
         }
         // After the external program `f` finishes, reset terminal state and flush any buffered keypresses.
         flush_terminal_input_buffer();

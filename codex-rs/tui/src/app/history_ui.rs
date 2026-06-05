@@ -107,6 +107,7 @@ impl App {
     pub(super) fn reset_transcript_state_after_clear(&mut self) {
         self.overlay = None;
         self.transcript_cells.clear();
+        self.chat_widget.clear_sticky_transcript_selection();
         self.deferred_history_lines.clear();
         self.has_emitted_history_lines = false;
         self.transcript_reflow.clear();
