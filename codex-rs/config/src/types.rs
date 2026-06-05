@@ -677,6 +677,11 @@ pub struct Tui {
     #[serde(default)]
     pub raw_output_mode: bool,
 
+    /// Keep the composer fixed while transcript history scrolls inside the TUI.
+    /// Defaults to `false`.
+    #[serde(default)]
+    pub sticky_transcript: bool,
+
     /// Controls whether the TUI uses the terminal's alternate screen buffer.
     ///
     /// - `auto` (default): Use alternate screen.

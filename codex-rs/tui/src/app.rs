@@ -1037,6 +1037,13 @@ See the Codex keymap documentation for supported actions and examples."
         if let Some(entry) = startup_hooks_browser {
             app.chat_widget.open_hooks_browser(entry);
         }
+        if app.chat_widget.sticky_transcript_enabled()
+            && let Err(err) = tui.set_sticky_mouse_capture_enabled(true)
+        {
+            tracing::warn!(error = %err, "failed to enable sticky transcript mouse capture at startup");
+            app.chat_widget
+                .add_error_message(format!("Failed to update mouse capture: {err}"));
+        }
         let initial_session_started_at = Instant::now();
         if let Some(started) = initial_started_thread {
             let thread_id = started.session.thread_id;
@@ -1254,6 +1261,9 @@ See the Codex keymap documentation for supported actions and examples."
                     let pasted = pasted.replace("\r", "\n");
                     self.chat_widget.handle_paste(pasted);
                 }
+                TuiEvent::Mouse(mouse_event) => {
+                    self.handle_mouse_event(tui, mouse_event);
+                }
                 TuiEvent::Draw | TuiEvent::Resize => {
                     if self.backtrack_render_pending {
                         self.rebuild_transcript_after_backtrack(tui)?;
@@ -1322,6 +1332,25 @@ See the Codex keymap documentation for supported actions and examples."
         tui: &mut tui::Tui,
         terminal_resize_reflow_enabled: bool,
     ) -> Result<Rect> {
+        if self.chat_widget.sticky_transcript_enabled() {
+            let desired_height = tui.terminal.size()?.height;
+            let mut rendered_area = Rect::default();
+            tui.draw(desired_height, |frame| {
+                let area = frame.area();
+                rendered_area = area;
+                self.chat_widget.render_sticky_transcript(
+                    area,
+                    frame.buffer,
+                    &self.transcript_cells,
+                );
+                if let Some((x, y)) = self.chat_widget.sticky_transcript_cursor_pos(area) {
+                    frame.set_cursor_style(self.chat_widget.sticky_transcript_cursor_style(area));
+                    frame.set_cursor_position((x, y));
+                }
+            })?;
+            return Ok(rendered_area);
+        }
+
         let desired_height = self.chat_widget.desired_height(tui.terminal.size()?.width);
         let mut rendered_area = Rect::default();
         if terminal_resize_reflow_enabled {

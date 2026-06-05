@@ -16,7 +16,9 @@ pub(super) async fn test_config() -> Config {
     config.codex_home = codex_home.abs();
     config.sqlite_home = codex_home.clone();
     config.log_dir = codex_home.join("log");
-    config.cwd = PathBuf::from(test_path_display("/tmp/project")).abs();
+    let test_cwd = PathBuf::from(test_path_display("/tmp/project"));
+    std::fs::create_dir_all(&test_cwd).expect("create test cwd");
+    config.cwd = test_cwd.abs();
     config.config_layer_stack = ConfigLayerStack::default();
     config.startup_warnings.clear();
     config.user_instructions = None;
@@ -181,6 +183,11 @@ pub(super) async fn make_chatwidget_manual(
         session_telemetry,
     };
     let mut widget = ChatWidget::new_with_op_target(common, super::CodexOpTarget::Direct(op_tx));
+    // Keep project-root lookups deterministic even when the host /tmp has stray .git markers.
+    widget.status_line_project_root_name_cache = Some(CachedProjectRootName {
+        cwd: widget.config.cwd.to_path_buf(),
+        root_name: None,
+    });
     widget.transcript.active_cell = None;
     widget.transcript.active_cell_revision = 0;
     widget.normal_placeholder_text = "Ask Codex to do anything".to_string();

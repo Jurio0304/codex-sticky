@@ -720,6 +720,9 @@ pub struct Config {
     /// Start the TUI in raw scrollback mode for copy-friendly transcript output.
     pub tui_raw_output_mode: bool,
 
+    /// Keep the composer fixed while transcript history scrolls inside the TUI.
+    pub tui_sticky_transcript: bool,
+
     /// Start the TUI in the specified collaboration mode (plan/default).
 
     /// Controls whether the TUI uses the terminal's alternate screen buffer.
@@ -3595,6 +3598,11 @@ impl Config {
                 .tui
                 .as_ref()
                 .map(|t| t.raw_output_mode)
+                .unwrap_or(false),
+            tui_sticky_transcript: cfg
+                .tui
+                .as_ref()
+                .map(|t| t.sticky_transcript)
                 .unwrap_or(false),
             tui_alternate_screen: cfg
                 .tui
