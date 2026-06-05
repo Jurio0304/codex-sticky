@@ -1,3 +1,14 @@
+> **Unofficial community fork**
+>
+> This repository is an unofficial community fork of `openai/codex`.
+> It adds an optional Sticky Transcript TUI mode and is not maintained
+> or endorsed by OpenAI.
+>
+> - `codex`: official Codex CLI behavior
+> - `codex-sticky`: Codex CLI with Sticky Transcript enabled by default
+>
+> See [`docs/codex-sticky.md`](docs/codex-sticky.md) for details.
+
 <p align="center"><strong>Codex CLI</strong> is a coding agent from OpenAI that runs locally on your computer.
 <p align="center">
   <img src="https://github.com/openai/codex/blob/main/.github/codex-cli-splash.png" alt="Codex CLI splash" width="80%" />

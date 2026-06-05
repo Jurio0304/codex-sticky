@@ -1,20 +1,23 @@
 # Codex Sticky Transcript
 
-Sticky Transcript is an optional Codex TUI layout mode. It keeps the native composer fixed at the bottom while PageUp, PageDown, Ctrl+End, mouse wheel scrolling, and mouse drag selection operate on the transcript viewport above it. This is useful when you are reading earlier assistant output while composing the next request.
+Codex Sticky Transcript is an unofficial community fork of `openai/codex`.
+It adds an optional Sticky Transcript TUI mode while keeping the upstream
+Codex CLI source and behavior available. This project is not maintained or
+endorsed by OpenAI.
 
-## Native Mode
+## Entry Points
 
-The normal entry point is unchanged:
+The normal Codex entry point is unchanged:
 
 ```bash
 codex
 ```
 
-With the default configuration, `tui.sticky_transcript` is `false`, so Codex keeps the native transcript and terminal scrollback behavior.
+`codex` keeps the official Codex CLI behavior. With the default configuration,
+`tui.sticky_transcript` is `false`.
 
-## Sticky Mode
-
-The optional wrapper runs a locally built Codex binary with Sticky Transcript enabled for that process:
+The optional wrapper starts a locally built Codex binary with Sticky Transcript
+enabled for that process:
 
 ```bash
 codex-sticky
@@ -26,9 +29,31 @@ The wrapper passes the existing CLI override syntax:
 -c 'tui.sticky_transcript=true'
 ```
 
-## Session Toggle
+This keeps `codex` and `codex-sticky` side by side. The wrapper does not
+overwrite the official `codex` command.
 
-Inside the TUI, Sticky Transcript can be toggled without restarting or clearing the session:
+## Sticky Transcript Mode
+
+Sticky Transcript keeps the native composer fixed at the bottom while the
+transcript above it scrolls independently. It is useful when reading earlier
+assistant output while composing the next request.
+
+Supported controls include:
+
+- `PageUp` and `PageDown` to browse the transcript.
+- `Ctrl+End` to jump back to the newest output and resume follow-tail.
+- Mouse wheel scrolling inside the transcript viewport.
+- Mouse drag selection inside the transcript viewport.
+- A low-noise new-output hint when streaming continues while scrolled away from
+  the bottom.
+
+Sticky Transcript and raw output mode are intentionally mutually exclusive. If
+raw mode is enabled, `/sticky on` is rejected. If Sticky Transcript is enabled,
+`/raw on` is rejected.
+
+## Session Commands
+
+Sticky Transcript can be toggled without restarting or clearing the session:
 
 ```text
 /sticky
@@ -37,26 +62,51 @@ Inside the TUI, Sticky Transcript can be toggled without restarting or clearing 
 /sticky status
 ```
 
-These commands are local TUI commands. They do not submit a model request and do not modify the current composer draft.
+These commands are local TUI commands. They do not submit a model request and
+do not modify the current composer draft.
 
-## Mouse And Clipboard
+The `/sticky` command does not persist changes. To make Sticky Transcript the
+default for a Codex config, edit `~/.codex/config.toml` manually:
 
-Sticky mode uses a narrow mouse-reporting setup for the transcript viewport:
+```toml
+[tui]
+sticky_transcript = true
+```
+
+## Mouse Selection And Clipboard
+
+Sticky mode enables a narrow mouse-reporting setup for the transcript viewport:
 
 ```text
 CSI ? 1006 h
 CSI ? 1002 h
 ```
 
-This enables SGR mouse coordinates and button/drag/wheel events without enabling all-motion reporting. The mouse wheel scrolls the transcript. A left-button drag highlights transcript text; releasing the button copies the selected plain text through OSC 52:
+This enables SGR mouse coordinates and button, drag, and wheel events without
+enabling all-motion reporting. The mouse wheel scrolls the transcript. A
+left-button drag highlights transcript text; releasing the button copies the
+selected plain text through OSC 52:
 
 ```text
 OSC 52 ; c ; <base64 payload> BEL
 ```
 
-The copy path is only triggered by completing a Sticky transcript drag selection. It does not read the clipboard, does not run in the background, and does not include the composer, unread hint, layout spacer, ANSI styling, or selection highlight.
+Clipboard behavior is intentionally narrow:
 
-Termius Desktop must allow OSC 52 clipboard writes for local Windows clipboard integration. If copying works without tmux but not inside tmux, check the tmux server:
+- OSC 52 clipboard writes only occur after the user completes a Sticky
+  transcript drag selection.
+- Sticky Transcript does not read the clipboard.
+- Sticky Transcript does not copy in the background.
+- Sticky Transcript does not record or log copied payloads.
+- Very large selections are capped before OSC 52 payload generation.
+- The copied text excludes the composer, unread hint, layout spacer, ANSI
+  styling, and selection highlight.
+
+## tmux And OSC 52
+
+Clipboard forwarding depends on both the terminal and any terminal multiplexer
+in the path. If copying works outside tmux but not inside tmux, inspect the tmux
+server:
 
 ```bash
 tmux show -s set-clipboard
@@ -64,34 +114,30 @@ tmux info | grep 'Ms:'
 tmux -V
 ```
 
-For tmux sessions that allow applications inside tmux to update the outer terminal clipboard, this is commonly required:
+For tmux sessions that allow applications inside tmux to update the outer
+terminal clipboard, this is commonly required:
 
 ```tmux
 set -s set-clipboard on
 ```
 
-Also ensure the `Ms` capability is present. Sticky wraps OSC 52 for tmux passthrough when `$TMUX` is set; if your tmux build or configuration blocks passthrough, you may also need `set -g allow-passthrough on`. Selection highlighting still works when forwarding is blocked, but clipboard forwarding must be fixed in tmux/terminal configuration.
+Also ensure the `Ms` capability is present. Sticky wraps OSC 52 for tmux
+passthrough when `$TMUX` is set. If a tmux build or configuration blocks
+passthrough, `set -g allow-passthrough on` may also be required. Selection
+highlighting still works when forwarding is blocked, but clipboard forwarding
+must be fixed in tmux or terminal configuration.
 
-## Persistent Config
+## Build And Install From Source
 
-To make Sticky Transcript the default for a Codex config, edit `~/.codex/config.toml` manually:
-
-```toml
-[tui]
-sticky_transcript = true
-```
-
-The `/sticky` command does not persist changes.
-
-## Build And Install
-
-From the repository root:
+This project currently documents source builds only. Do not assume a prebuilt
+GitHub Release binary exists until one is explicitly published.
 
 ```bash
-cd codex-rs
-cargo build --release --bin codex
-cd ..
+git clone <public-repository>
+cd codex-sticky
+cargo build --manifest-path codex-rs/Cargo.toml --release --bin codex
 bash scripts/install-codex-sticky.sh
+codex-sticky
 ```
 
 The install script copies the locally built binary to:
@@ -106,20 +152,39 @@ and writes the wrapper to:
 ~/.local/bin/codex-sticky
 ```
 
-## Side By Side With Official Codex
-
-The wrapper does not overwrite the official `codex` entry:
+Confirm that `codex` and `codex-sticky` resolve to different entries before
+relying on both commands:
 
 ```bash
 which codex
 which codex-sticky
 ```
 
-Confirm that these are different paths before relying on both commands.
+## Uninstall
+
+Remove the Sticky wrapper and its copied binary:
+
+```bash
+rm -f ~/.local/bin/codex-sticky
+rm -f ~/.local/libexec/codex-sticky-bin
+```
+
+This does not remove or modify the official `codex` command.
+
+## Build Cache Cleanup
+
+Source builds create a Rust `target/` directory under `codex-rs/`. To reclaim
+disk space after building:
+
+```bash
+cd codex-rs
+cargo clean
+```
 
 ## Syncing Upstream
 
-After rebasing onto upstream, rebuild and reinstall the local wrapper target:
+When maintaining a fork, keep the upstream remote pointing at `openai/codex` and
+sync from upstream before rebuilding:
 
 ```bash
 git fetch upstream
@@ -127,10 +192,33 @@ git rebase upstream/main
 bash scripts/install-codex-sticky.sh
 ```
 
-## Known Boundaries
+## Validation Scope
 
-Sticky Transcript and raw output mode are intentionally not combined in this first version. If raw mode is enabled, `/sticky on` is rejected; if Sticky Transcript is enabled, `/raw on` is rejected.
+Tested:
 
-Alternate-screen behavior is unchanged. Sticky Transcript only changes the in-TUI transcript viewport and leaves the native composer, status rows, popups, approvals, file search, shell commands, MCP, skills, plugins, hooks, and subagents on their existing code paths.
+- Linux x86_64
+- SSH terminals
+- Termius
+- tmux 3.6a
 
-In tmux and SSH, mouse wheel and drag selection depend on terminal mouse reporting reaching Codex, and clipboard copy depends on OSC 52 reaching the local terminal. PageUp, PageDown, and Ctrl+End remain the primary keyboard controls. During streaming output, scrolling away from the bottom keeps the current viewport locked and shows a low-noise new output hint until Ctrl+End or scrolling back to the bottom restores follow-tail. Terminal resize recalculates the transcript viewport and keeps the composer at the bottom.
+Best effort:
+
+- Other OSC 52 compatible terminals
+- Other tmux versions
+- macOS
+- WSL2
+
+Not fully validated:
+
+- Native Windows legacy console
+
+## Known Limits
+
+- OSC 52 clipboard copy depends on terminal support.
+- tmux may require `set-clipboard`, the `Ms` capability, and passthrough support.
+- Mouse reporting must reach Codex for wheel scrolling and drag selection.
+- `PageUp`, `PageDown`, and `Ctrl+End` remain the primary keyboard controls.
+- Alternate-screen behavior is unchanged.
+- Sticky Transcript only changes the in-TUI transcript viewport and leaves the
+  native composer, status rows, popups, approvals, file search, shell commands,
+  MCP, skills, plugins, hooks, and subagents on their existing code paths.
