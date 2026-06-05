@@ -38,6 +38,7 @@ use codex_utils_cli::ProfileV2Name;
 use codex_utils_cli::SharedCliOptions;
 use codex_utils_cli::resume_hint;
 use owo_colors::OwoColorize;
+use std::ffi::OsStr;
 use std::io::IsTerminal;
 use std::path::PathBuf;
 use supports_color::Stream;
@@ -63,6 +64,9 @@ use crate::plugin_cmd::PluginSubcommand;
 use crate::remote_control_cmd::RemoteControlCommand;
 use doctor::DoctorCommand;
 use state_db_recovery as local_state_db;
+
+const CODEX_STICKY_BIN_NAME: &str = "codex-sticky";
+const CODEX_STICKY_DEFAULT_OVERRIDE: &str = "tui.sticky_transcript=true";
 
 use codex_config::LoaderOverrides;
 use codex_core::build_models_manager;
@@ -899,6 +903,24 @@ fn main() -> anyhow::Result<()> {
     })
 }
 
+fn invoked_as_codex_sticky() -> bool {
+    std::env::args_os()
+        .next()
+        .is_some_and(|arg0| is_codex_sticky_arg0(&arg0))
+}
+
+fn is_codex_sticky_arg0(arg0: &OsStr) -> bool {
+    PathBuf::from(arg0)
+        .file_name()
+        .is_some_and(|name| name == CODEX_STICKY_BIN_NAME)
+}
+
+fn apply_codex_sticky_default_override(config_overrides: &mut CliConfigOverrides) {
+    config_overrides
+        .raw_overrides
+        .insert(0, CODEX_STICKY_DEFAULT_OVERRIDE.to_string());
+}
+
 async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
     let MultitoolCli {
         config_overrides: mut root_config_overrides,
@@ -907,6 +929,10 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
         mut interactive,
         subcommand,
     } = MultitoolCli::parse();
+
+    if invoked_as_codex_sticky() {
+        apply_codex_sticky_default_override(&mut root_config_overrides);
+    }
 
     // Fold --enable/--disable into config overrides so they flow to all subcommands.
     let toggle_overrides = feature_toggles.to_overrides()?;
@@ -2369,6 +2395,33 @@ mod tests {
     use codex_protocol::ThreadId;
     use codex_tui::TokenUsage;
     use pretty_assertions::assert_eq;
+
+    #[test]
+    fn codex_sticky_arg0_detection_matches_basename() {
+        assert!(is_codex_sticky_arg0(OsStr::new("codex-sticky")));
+        assert!(is_codex_sticky_arg0(OsStr::new(
+            "/usr/local/bin/codex-sticky"
+        )));
+        assert!(!is_codex_sticky_arg0(OsStr::new("codex")));
+        assert!(!is_codex_sticky_arg0(OsStr::new("codex-sticky-helper")));
+    }
+
+    #[test]
+    fn codex_sticky_default_override_has_lower_precedence_than_cli() {
+        let mut overrides = CliConfigOverrides {
+            raw_overrides: vec!["tui.sticky_transcript=false".to_string()],
+        };
+
+        apply_codex_sticky_default_override(&mut overrides);
+
+        assert_eq!(
+            overrides.raw_overrides,
+            vec![
+                "tui.sticky_transcript=true".to_string(),
+                "tui.sticky_transcript=false".to_string(),
+            ]
+        );
+    }
 
     #[test]
     fn exec_server_remote_auth_accepts_api_key_auth() {
