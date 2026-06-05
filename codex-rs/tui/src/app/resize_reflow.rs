@@ -365,6 +365,16 @@ impl App {
     }
 
     pub(super) fn handle_draw_pre_render(&mut self, tui: &mut tui::Tui) -> Result<()> {
+        if self.chat_widget.sticky_transcript_enabled() {
+            let size = tui.terminal.size()?;
+            if size != tui.terminal.last_known_screen_size {
+                self.chat_widget.on_terminal_resize(size.width);
+                self.refresh_status_line();
+            }
+            self.transcript_reflow.clear();
+            return Ok(());
+        }
+
         let size = tui.terminal.size()?;
         let should_rebuild_transcript = self.handle_draw_size_change(
             size,

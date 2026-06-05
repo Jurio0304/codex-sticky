@@ -3000,6 +3000,11 @@
           "description": "Color status line items with colors derived from the active syntax theme. Defaults to `true`.",
           "type": "boolean"
         },
+        "sticky_transcript": {
+          "default": false,
+          "description": "Keep the composer fixed while transcript history scrolls inside the TUI. Defaults to `false`.",
+          "type": "boolean"
+        },
         "terminal_resize_reflow_max_rows": {
           "default": null,
           "description": "Trim terminal resize-reflow replay to the most recent rendered terminal rows when the transcript exceeds this cap. Omit to use Codex's terminal-specific default. Set to `0` to keep all rendered rows.",

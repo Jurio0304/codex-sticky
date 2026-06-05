@@ -426,7 +426,7 @@ mod tests {
 
         assert_eq!(
             popup.selected_item(),
-            Some(CommandItem::Builtin(SlashCommand::Status))
+            Some(CommandItem::Builtin(SlashCommand::Sticky))
         );
         assert_eq!(popup.state.scroll_top, 0);
         let width = 72;

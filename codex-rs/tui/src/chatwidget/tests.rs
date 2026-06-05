@@ -235,6 +235,7 @@ mod slash_commands;
 mod status_and_layout;
 mod status_command_tests;
 mod status_surface_previews;
+mod sticky_transcript;
 mod terminal_title;
 
 pub(crate) use helpers::make_chatwidget_manual_with_sender;
