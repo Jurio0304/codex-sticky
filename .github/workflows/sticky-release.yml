@@ -10,7 +10,7 @@ permissions:
 
 env:
   CARGO_NET_GIT_FETCH_WITH_CLI: "true"
-  TARGET: x86_64-unknown-linux-musl
+  TARGET: x86_64-unknown-linux-gnu
 
 jobs:
   linux-x86_64:
@@ -40,12 +40,10 @@ jobs:
             exit 1
           fi
       - uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
-        with:
-          targets: ${{ env.TARGET }}
-      - name: Install musl build tools
-        run: bash "${GITHUB_WORKSPACE}/.github/scripts/install-musl-build-tools.sh"
+      - name: Install Linux build dependencies
+        run: sudo apt-get update && sudo apt-get install -y pkg-config libssl-dev
       - name: Build codex
-        run: cargo build --release --bin codex --target "$TARGET"
+        run: cargo build --release --bin codex
       - name: Package codex-sticky
         id: package
         shell: bash
@@ -58,7 +56,7 @@ jobs:
           checksums="${RUNNER_TEMP}/SHA256SUMS"
 
           mkdir -p "$package_dir"
-          cp "target/${TARGET}/release/codex" "${package_dir}/codex-sticky"
+          cp target/release/codex "${package_dir}/codex-sticky"
           cp ../LICENSE ../NOTICE "$package_dir/"
           tar -C "$package_dir" -czf "$archive" codex-sticky LICENSE NOTICE
           (cd "$RUNNER_TEMP" && sha256sum "$archive_name" > SHA256SUMS)

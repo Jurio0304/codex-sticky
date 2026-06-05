@@ -25,25 +25,34 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          latest_tag="$(gh api repos/openai/codex/releases --jq 'map(select((.draft | not) and (.prerelease | not)))[0].tag_name // ""')"
+          latest_tag="$(gh api 'repos/openai/codex/releases?per_page=30' --jq 'map(select((.draft | not) and (.prerelease | not)))[0].tag_name // ""')"
           if [[ -z "$latest_tag" ]]; then
             echo "No stable upstream release found" >&2
             exit 1
           fi
 
-          base_tag="$(python3 - <<'PY'
+          read -r base_tag synced_ref synced_commit < <(python3 - <<'PY'
           import json
 
           with open(".sticky/upstream-base.json", encoding="utf-8") as handle:
-              tag = json.load(handle)["latest_stable_tag"]["name"]
+              data = json.load(handle)
+          tag = data["latest_stable_release"]["tag"]
           if not isinstance(tag, str) or not tag:
-              raise SystemExit("latest_stable_tag.name must be a non-empty string")
-          print(tag)
+              raise SystemExit("latest_stable_release.tag must be a non-empty string")
+          synced_ref = data["synced_ref"]
+          synced_commit = data["synced_commit"]
+          if not isinstance(synced_ref, str) or not synced_ref:
+              raise SystemExit("synced_ref must be a non-empty string")
+          if not isinstance(synced_commit, str) or not synced_commit:
+              raise SystemExit("synced_commit must be a non-empty string")
+          print(tag, synced_ref, synced_commit)
           PY
           )"
 
           echo "latest_tag=$latest_tag" >> "$GITHUB_OUTPUT"
           echo "base_tag=$base_tag" >> "$GITHUB_OUTPUT"
+          echo "synced_ref=$synced_ref" >> "$GITHUB_OUTPUT"
+          echo "synced_commit=$synced_commit" >> "$GITHUB_OUTPUT"
           if [[ "$latest_tag" != "$base_tag" ]]; then
             echo "update_available=true" >> "$GITHUB_OUTPUT"
           else
@@ -55,6 +64,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           LATEST_TAG: ${{ steps.check.outputs.latest_tag }}
           BASE_TAG: ${{ steps.check.outputs.base_tag }}
+          SYNCED_REF: ${{ steps.check.outputs.synced_ref }}
+          SYNCED_COMMIT: ${{ steps.check.outputs.synced_commit }}
         shell: bash
         run: |
           set -euo pipefail
@@ -65,6 +76,6 @@ jobs:
             exit 0
           fi
 
-          printf -v body 'OpenAI Codex has a newer stable release `%s`.\n\nCurrent Sticky upstream baseline records `%s`.\n\nThis workflow only creates a reminder issue. It does not merge upstream, modify code, create tags, or publish a release.' \
-            "$LATEST_TAG" "$BASE_TAG"
+          printf -v body 'OpenAI Codex has a newer stable release `%s`.\n\nSticky records latest stable release metadata as `%s`.\n\nThe currently synced upstream code is `%s` at `%s`; the recorded latest stable release tag is not treated as the code baseline unless it has been explicitly synced.\n\nThis workflow only creates a reminder issue. It does not merge upstream, modify code, create tags, or publish a release.' \
+            "$LATEST_TAG" "$BASE_TAG" "$SYNCED_REF" "$SYNCED_COMMIT"
           gh issue create --title "$title" --body "$body"

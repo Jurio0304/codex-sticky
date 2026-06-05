@@ -17,6 +17,11 @@ Prefer official stable release tags instead of continuously chasing
 `upstream/main`. Use `upstream/main` to inspect history and conflicts, then merge
 the selected stable tag.
 
+The current Sticky `main` is an initial migration from `upstream/main` at
+`55aa071b17c825bdb66fac99cde2e7a7acfbdee7`; it should not be presented as a
+standard release based on `rust-v0.137.0`. Create standardized Sticky releases
+only after explicitly syncing a chosen official stable tag.
+
 Enable recorded conflict reuse before the first sync:
 
 ```bash
@@ -52,8 +57,22 @@ cargo build --release --bin codex
 If common, core, or protocol crates changed, follow the repo's broader test
 guidance before updating `origin/main`.
 
+Recommended first standardized release flow:
+
+```text
+wait for a new official stable tag
+-> scripts/sticky/sync-upstream.sh <stable-tag>
+-> resolve conflicts manually
+-> test
+-> merge to Sticky main
+-> create v<upstream-version>-sticky.1
+```
+
+Do not create a release tag for the current initial migration, and do not name
+the current code `v0.137.0-sticky.1`.
+
 ## Baseline Updates
 
-After a reviewed sync, update `.sticky/upstream-base.json` with the official tag
-name/version, upstream tag object or commit SHA, comparison `upstream/main` SHA,
-and the new Sticky `origin/main` SHA after the reviewed update is pushed.
+After a reviewed sync, update `.sticky/upstream-base.json` with the synced ref,
+synced upstream commit, GitHub latest stable release tag/version, sync mode, and
+new Sticky `origin/main` SHA after the reviewed update is pushed.
