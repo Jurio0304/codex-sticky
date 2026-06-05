@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-06-05T19:36:19+08:00",
+  "official_repository": "openai/codex",
+  "fork_repository": "Jurio0304/codex-sticky",
+  "remotes": {
+    "origin": "git@github.com:Jurio0304/codex-sticky.git",
+    "upstream": "https://github.com/openai/codex"
+  },
+  "baseline": {
+    "upstream_main_sha": "55aa071b17c825bdb66fac99cde2e7a7acfbdee7",
+    "origin_main_sha": "25ac28fa5ef0052d8c82aa410606abc532a38a2c",
+    "sticky_main_sha": "25ac28fa5ef0052d8c82aa410606abc532a38a2c"
+  },
+  "latest_stable_tag": {
+    "name": "codex-rs-6a8a936f75ea44faf05ff4fab0c6a36fc970428d-1-rust-v0.0.2506261603",
+    "version": "0.0.2506261603",
+    "object_sha": "fa0e17f83a7925bc023b5d35661f5af0828fc2c1",
+    "tagger_date": "2025-06-26T13:03:31-07:00",
+    "verified_from": "local tags merged into upstream/main",
+    "selection_rule": "latest local non-prerelease codex-rs rust release tag merged into upstream/main; excludes alpha, beta, rc, and pre tags"
+  },
+  "notes": [
+    "This fork syncs periodically from official stable tags instead of continuously chasing upstream/main.",
+    "The upstream tag list was not refreshed during this documentation pass; an ls-remote check timed out, so the stable tag value is based on local repository tags/history only.",
+    "Historical sticky tag v0.1.0 must be preserved and never overwritten or deleted."
+  ]
+}

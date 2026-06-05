@@ -1,13 +1,23 @@
-> **Unofficial community fork**
+> **Unofficial lightweight fork: Codex Sticky**
 >
 > This repository is an unofficial community fork of `openai/codex`.
-> It adds an optional Sticky Transcript TUI mode and is not maintained
-> or endorsed by OpenAI.
+> It adds an optional Sticky Transcript TUI mode and is not maintained,
+> sponsored, or endorsed by OpenAI.
 >
-> - `codex`: official Codex CLI behavior
-> - `codex-sticky`: Codex CLI with Sticky Transcript enabled by default
+> - `origin/main`: Sticky's long-term maintenance branch.
+> - `upstream/main`: OpenAI's official baseline for comparison and syncs.
+> - `codex`: official Codex CLI behavior remains available.
+> - `codex-sticky`: Sticky Transcript enabled by default, installed side by
+>   side at `~/.local/bin/codex-sticky` without replacing official `codex`.
 >
-> See [`docs/codex-sticky.md`](docs/codex-sticky.md) for details.
+> Sticky maintenance tracks official stable tags periodically instead of
+> continuously chasing `upstream/main`. Current recorded baseline:
+> `upstream/main` `55aa071b17c825bdb66fac99cde2e7a7acfbdee7`; latest known
+> stable tag from local history:
+> `codex-rs-6a8a936f75ea44faf05ff4fab0c6a36fc970428d-1-rust-v0.0.2506261603`.
+>
+> See [`docs/codex-sticky.md`](docs/codex-sticky.md) for user-facing Sticky
+> behavior and [`docs/codex-sticky/`](docs/codex-sticky/) for fork maintenance.
 
 <p align="center"><strong>Codex CLI</strong> is a coding agent from OpenAI that runs locally on your computer.
 <p align="center">
@@ -22,21 +32,36 @@ If you want Codex in your code editor (VS Code, Cursor, Windsurf), <a href="http
 
 ## Quickstart
 
-### Installing and running Codex CLI
+### Installing Codex Sticky from this fork
 
-Run the following on Mac or Linux to install Codex CLI:
+When a Sticky release is available, download the `codex-sticky` archive from
+this fork's GitHub Releases and install it under your user-local bin directory:
+
+```shell
+mkdir -p ~/.local/bin
+tar -xzf codex-sticky-<target>.tar.gz
+install -m 0755 codex-sticky ~/.local/bin/codex-sticky
+~/.local/bin/codex-sticky
+```
+
+This intentionally does not overwrite the official `codex` command. Keep both
+commands side by side if you use the official CLI too.
+
+### Installing and running official Codex CLI
+
+Run the following on Mac or Linux to install official Codex CLI:
 
 ```shell
 curl -fsSL https://chatgpt.com/codex/install.sh | sh
 ```
 
-Run the following on Windows to install Codex CLI:
+Run the following on Windows to install official Codex CLI:
 
 ```
 powershell -ExecutionPolicy ByPass -c "irm https://chatgpt.com/codex/install.ps1 | iex"
 ```
 
-Codex CLI can also be installed via the following package managers:
+Official Codex CLI can also be installed via the following package managers:
 
 ```shell
 # Install using npm
@@ -48,7 +73,7 @@ npm install -g @openai/codex
 brew install --cask codex
 ```
 
-Then simply run `codex` to get started.
+Then simply run `codex` to get started with official Codex CLI.
 
 <details>
 <summary>You can also go to the <a href="https://github.com/openai/codex/releases/latest">latest GitHub Release</a> and download the appropriate binary for your platform.</summary>
@@ -75,6 +100,11 @@ You can also use Codex with an API key, but this requires [additional setup](htt
 ## Docs
 
 - [**Codex Documentation**](https://developers.openai.com/codex)
+- [**Sticky Transcript user notes**](./docs/codex-sticky.md)
+- [**Sticky patchset**](./docs/codex-sticky/PATCHSET.md)
+- [**Sticky maintenance**](./docs/codex-sticky/MAINTENANCE.md)
+- [**Sticky releasing**](./docs/codex-sticky/RELEASING.md)
+- [**Sticky GitHub settings**](./docs/codex-sticky/GITHUB_SETTINGS.md)
 - [**Contributing**](./docs/contributing.md)
 - [**Installing & building**](./docs/install.md)
 - [**Open source fund**](./docs/open-source-fund.md)
