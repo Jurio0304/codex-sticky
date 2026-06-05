@@ -59,9 +59,6 @@ mod tests {
         let sequence = ansi(EnableStickyMouseCapture);
 
         assert_eq!(sequence, "\x1b[?1006h\x1b[?1002h");
-        assert!(!sequence.contains("?1000h"));
-        assert!(!sequence.contains("?1003h"));
-        assert!(!sequence.contains("?1015h"));
     }
 
     #[test]
@@ -69,8 +66,5 @@ mod tests {
         let sequence = ansi(DisableStickyMouseCapture);
 
         assert_eq!(sequence, "\x1b[?1002l\x1b[?1006l");
-        assert!(!sequence.contains("?1000l"));
-        assert!(!sequence.contains("?1003l"));
-        assert!(!sequence.contains("?1015l"));
     }
 }

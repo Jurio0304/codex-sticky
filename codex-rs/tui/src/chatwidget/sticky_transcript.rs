@@ -370,21 +370,6 @@ impl ChatWidget {
         self.sticky_transcript.enabled()
     }
 
-    #[cfg(test)]
-    pub(crate) fn sticky_transcript_follow_tail(&self) -> bool {
-        self.sticky_transcript.follow_tail()
-    }
-
-    #[cfg(test)]
-    pub(crate) fn sticky_transcript_scroll_offset(&self) -> usize {
-        self.sticky_transcript.scroll_offset()
-    }
-
-    #[cfg(test)]
-    pub(crate) fn sticky_transcript_has_unread_output(&self) -> bool {
-        self.sticky_transcript.has_unread_output()
-    }
-
     pub(crate) fn set_sticky_transcript_enabled(&mut self, enabled: bool) {
         self.sticky_transcript.set_enabled(enabled);
         self.config.tui_sticky_transcript = enabled;
