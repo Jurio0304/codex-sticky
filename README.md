@@ -11,10 +11,11 @@
 >   side at `~/.local/bin/codex-sticky` without replacing official `codex`.
 >
 > Sticky maintenance tracks official stable tags periodically instead of
-> continuously chasing `upstream/main`. Current recorded baseline:
-> `upstream/main` `55aa071b17c825bdb66fac99cde2e7a7acfbdee7`; latest known
-> stable tag from local history:
-> `codex-rs-6a8a936f75ea44faf05ff4fab0c6a36fc970428d-1-rust-v0.0.2506261603`.
+> continuously chasing `upstream/main`. Current Sticky code comes from an
+> initial `upstream/main` migration at
+> `55aa071b17c825bdb66fac99cde2e7a7acfbdee7`; it is not a standard release
+> based on the current GitHub stable release `rust-v0.137.0`.
+> Future standardized Sticky releases should first sync an official stable tag.
 >
 > See [`docs/codex-sticky.md`](docs/codex-sticky.md) for user-facing Sticky
 > behavior and [`docs/codex-sticky/`](docs/codex-sticky/) for fork maintenance.
@@ -39,7 +40,7 @@ this fork's GitHub Releases and install it under your user-local bin directory:
 
 ```shell
 mkdir -p ~/.local/bin
-tar -xzf codex-sticky-<target>.tar.gz
+tar -xzf codex-sticky-<release-tag>-x86_64-unknown-linux-gnu.tar.gz
 install -m 0755 codex-sticky ~/.local/bin/codex-sticky
 ~/.local/bin/codex-sticky
 ```

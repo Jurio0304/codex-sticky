@@ -12,7 +12,7 @@ Tag format:
   v<upstream-version>-sticky.<revision>
 
 Example:
-  v0.0.2506261603-sticky.1
+  v0.138.0-sticky.1
 USAGE
 }
 
@@ -137,8 +137,7 @@ print_artifact_guidance() {
 
 Artifact naming guidance only; no build or release was performed:
   - binary inside archive: codex-sticky
-  - preferred Linux archive: codex-sticky-${tag}-x86_64-unknown-linux-musl.tar.gz
-  - fallback Linux archive:  codex-sticky-${tag}-x86_64-unknown-linux-gnu.tar.gz
+  - Linux archive:          codex-sticky-${tag}-x86_64-unknown-linux-gnu.tar.gz
   - checksum file:          SHA256SUMS
   - archive contents:       codex-sticky, LICENSE, NOTICE
 GUIDANCE

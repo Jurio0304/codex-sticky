@@ -27,7 +27,9 @@ Use minimal workflow permissions:
 
 Preserve historical tags, especially `v0.1.0`. New release tags use
 `v<upstream-version>-sticky.<revision>` and must not overwrite or delete old
-Sticky tags.
+Sticky tags. Do not create a Sticky release tag for the current initial
+`upstream/main` migration; wait until an official stable tag has been explicitly
+synced and reviewed.
 
 ## Automation Boundaries
 
