@@ -359,6 +359,7 @@ use codex_protocol::protocol::ThreadMemoryMode;
 use codex_protocol::protocol::TokenCountEvent;
 use codex_protocol::protocol::TokenUsage;
 use codex_protocol::protocol::TokenUsageInfo;
+use codex_protocol::protocol::TurnModerationMetadataEvent;
 use codex_protocol::protocol::WarningEvent;
 use codex_protocol::user_input::UserInput;
 use codex_tools::ToolEnvironmentMode;
@@ -507,12 +508,13 @@ impl Codex {
 
         let primary_environment = environment_selections.primary_environment();
         let mut user_instruction_warnings = Vec::new();
-        let user_instructions = AgentsMdManager::new(&config)
-            .user_instructions(
-                primary_environment.as_deref(),
-                &mut user_instruction_warnings,
-            )
-            .await;
+        let user_instructions = if let Some(primary_environment) = primary_environment {
+            AgentsMdManager::new(&config)
+                .user_instructions(primary_environment.as_ref(), &mut user_instruction_warnings)
+                .await
+        } else {
+            None
+        };
         config.startup_warnings.extend(user_instruction_warnings);
 
         let exec_policy = if crate::guardian::is_guardian_reviewer_source(&session_source) {
@@ -557,11 +559,8 @@ impl Codex {
             .await;
         let multi_agent_version =
             resolve_multi_agent_version(&conversation_history, inherited_multi_agent_version);
-        let startup_multi_agent_version = multi_agent_version
-            .or(model_info.multi_agent_version)
-            .unwrap_or_else(|| config.multi_agent_version_from_features());
-        let _ = config
-            .effective_agent_max_threads(startup_multi_agent_version)
+        config
+            .validate_multi_agent_v2_config()
             .map_err(|err| CodexErr::InvalidRequest(err.to_string()))?;
         let base_instructions = config
             .base_instructions
@@ -581,7 +580,7 @@ impl Codex {
             mode: ModeKind::Default,
             settings: Settings {
                 model: model.clone(),
-                reasoning_effort: config.model_reasoning_effort,
+                reasoning_effort: config.model_reasoning_effort.clone(),
                 developer_instructions: None,
             },
         };
@@ -654,7 +653,7 @@ impl Codex {
             error!("Failed to create session: {e:#}");
             map_session_init_error(&e, &config.codex_home)
         })?;
-        let thread_id = session.conversation_id;
+        let thread_id = session.thread_id;
 
         // This task will run until Op::Shutdown is received.
         let session_for_loop = Arc::clone(&session);
@@ -801,6 +800,17 @@ impl Codex {
     pub(crate) async fn thread_config_snapshot(&self) -> ThreadConfigSnapshot {
         let state = self.session.state.lock().await;
         state.session_configuration.thread_config_snapshot()
+    }
+
+    pub(crate) async fn instruction_sources(&self) -> Vec<AbsolutePathBuf> {
+        let state = self.session.state.lock().await;
+        state
+            .session_configuration
+            .user_instructions
+            .as_ref()
+            .map_or_else(Vec::new, |instructions| {
+                instructions.sources().cloned().collect()
+            })
     }
 
     pub(crate) async fn thread_environment_selections(&self) -> Vec<TurnEnvironmentSelection> {
@@ -1369,7 +1379,7 @@ impl Session {
 
         ShellSnapshot::refresh_snapshot(
             codex_home.clone(),
-            self.conversation_id,
+            self.thread_id,
             next_cwd.clone(),
             self.services.user_shell.as_ref().clone(),
             self.services.shell_snapshot_tx.clone(),
@@ -1640,7 +1650,7 @@ impl Session {
         self.services
             .analytics_events_client
             .track_turn_codex_error(TurnCodexErrorFact::from_codex_err(
-                self.conversation_id.to_string(),
+                self.thread_id.to_string(),
                 turn_context.sub_id.clone(),
                 error,
             ));
@@ -1819,7 +1829,7 @@ impl Session {
         self.send_event(
             turn_context,
             EventMsg::ItemStarted(ItemStartedEvent {
-                thread_id: self.conversation_id,
+                thread_id: self.thread_id,
                 turn_id: turn_context.sub_id.clone(),
                 item: item.clone(),
                 started_at_ms: now_unix_timestamp_ms(),
@@ -1837,7 +1847,7 @@ impl Session {
         self.send_event(
             turn_context,
             EventMsg::ItemCompleted(ItemCompletedEvent {
-                thread_id: self.conversation_id,
+                thread_id: self.thread_id,
                 turn_id: turn_context.sub_id.clone(),
                 item,
                 completed_at_ms: now_unix_timestamp_ms(),
@@ -2628,6 +2638,15 @@ impl Session {
         .await;
     }
 
+    pub(crate) async fn emit_turn_moderation_metadata(
+        self: &Arc<Self>,
+        turn_context: &Arc<TurnContext>,
+        metadata: TurnModerationMetadataEvent,
+    ) {
+        self.send_event(turn_context, EventMsg::TurnModerationMetadata(metadata))
+            .await;
+    }
+
     pub(crate) async fn replace_history(
         &self,
         items: Vec<ResponseItem>,
@@ -2900,7 +2919,7 @@ impl Session {
             let subagents = self
                 .services
                 .agent_control
-                .format_environment_context_subagents(self.conversation_id)
+                .format_environment_context_subagents(self.thread_id)
                 .await;
             contextual_user_sections.push(
                 crate::context::EnvironmentContext::from_turn_context(turn_context, shell.as_ref())
@@ -3367,6 +3386,9 @@ pub(crate) fn emit_subagent_session_started(
         session_id: session_id.to_string(),
         thread_id: thread_id.to_string(),
         parent_thread_id: parent_thread_id.map(|thread_id| thread_id.to_string()),
+        forked_from_thread_id: thread_config
+            .forked_from_thread_id
+            .map(|thread_id| thread_id.to_string()),
         product_client_id: client_name.clone(),
         client_name,
         client_version,

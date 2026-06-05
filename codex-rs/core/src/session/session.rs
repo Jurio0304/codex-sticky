@@ -1,5 +1,6 @@
 use super::input_queue::InputQueue;
 use super::*;
+use crate::agents_md::LoadedAgentsMd;
 use crate::config::ConstraintError;
 use crate::goals::GoalRuntimeState;
 use crate::skills::SkillError;
@@ -19,7 +20,7 @@ use tokio::sync::Semaphore;
 ///
 /// A session has at most 1 running task at a time, and can be interrupted by user input.
 pub(crate) struct Session {
-    pub(crate) conversation_id: ThreadId,
+    pub(crate) thread_id: ThreadId,
     pub(crate) installation_id: String,
     pub(super) tx_event: Sender<Event>,
     pub(super) agent_status: watch::Sender<AgentStatus>,
@@ -54,8 +55,9 @@ pub(crate) struct SessionConfiguration {
     /// Developer instructions that supplement the base instructions.
     pub(super) developer_instructions: Option<String>,
 
-    /// Model instructions that are appended to the base instructions.
-    pub(super) user_instructions: Option<String>,
+    /// Model instructions that are appended to the base instructions and the
+    /// files that supplied them.
+    pub(super) user_instructions: Option<LoadedAgentsMd>,
 
     /// Personality preference for the model.
     pub(super) personality: Option<Personality>,
@@ -150,17 +152,11 @@ impl SessionConfiguration {
     }
 
     pub(super) fn sandbox_policy(&self) -> SandboxPolicy {
-        self.permission_profile()
-            .to_legacy_sandbox_policy(&self.cwd)
-            .unwrap_or_else(|_| {
-                let file_system_sandbox_policy = self.file_system_sandbox_policy();
-                codex_sandboxing::compatibility_sandbox_policy_for_permission_profile(
-                    self.permission_profile_state.permission_profile(),
-                    &file_system_sandbox_policy,
-                    self.network_sandbox_policy(),
-                    &self.cwd,
-                )
-            })
+        let permission_profile = self.permission_profile();
+        codex_sandboxing::compatibility_sandbox_policy_for_permission_profile(
+            &permission_profile,
+            &self.cwd,
+        )
     }
 
     pub(super) fn file_system_sandbox_policy(&self) -> FileSystemSandboxPolicy {
@@ -191,6 +187,7 @@ impl SessionConfiguration {
             personality: self.personality,
             collaboration_mode: self.collaboration_mode.clone(),
             session_source: self.session_source.clone(),
+            forked_from_thread_id: self.forked_from_thread_id,
             parent_thread_id: self.parent_thread_id,
             thread_source: self.thread_source,
         }
@@ -471,7 +468,7 @@ async fn warm_plugins_and_skills_for_session_init(
 impl Session {
     /// Returns the concrete identity for this thread.
     pub(crate) fn thread_id(&self) -> ThreadId {
-        self.conversation_id
+        self.thread_id
     }
 
     /// Returns the identity shared by the root thread and all descendant threads.
@@ -1061,7 +1058,7 @@ impl Session {
                 watch::channel(false);
 
             let sess = Arc::new(Session {
-                conversation_id: thread_id,
+                thread_id,
                 installation_id,
                 tx_event: tx_event.clone(),
                 agent_status,

@@ -109,7 +109,8 @@ fn keep_forked_rollout_item(item: &RolloutItem, preserve_reference_context_item:
             _ => false,
         },
         RolloutItem::ResponseItem(
-            ResponseItem::Reasoning { .. }
+            ResponseItem::AgentMessage { .. }
+            | ResponseItem::Reasoning { .. }
             | ResponseItem::LocalShellCall { .. }
             | ResponseItem::FunctionCall { .. }
             | ResponseItem::ToolSearchCall { .. }
@@ -231,9 +232,7 @@ impl AgentControl {
                 &config,
             )
             .await;
-        let agent_max_threads = config
-            .effective_agent_max_threads(multi_agent_version)
-            .map_err(|err| CodexErr::InvalidRequest(err.to_string()))?;
+        let agent_max_threads = config.effective_agent_max_threads(multi_agent_version);
         let mut reservation = self.state.reserve_spawn_slot(agent_max_threads)?;
         let inheritance = SpawnAgentThreadInheritance {
             shell_snapshot: self
@@ -632,9 +631,7 @@ impl AgentControl {
                 &config,
             )
             .await;
-        let agent_max_threads = config
-            .effective_agent_max_threads(multi_agent_version)
-            .map_err(|err| CodexErr::InvalidRequest(err.to_string()))?;
+        let agent_max_threads = config.effective_agent_max_threads(multi_agent_version);
         let mut reservation = self.state.reserve_spawn_slot(agent_max_threads)?;
         let (session_source, agent_metadata) = match session_source {
             SessionSource::SubAgent(SubAgentSource::ThreadSpawn {
@@ -719,7 +716,12 @@ impl AgentControl {
         agent_id: ThreadId,
         initial_operation: Op,
     ) -> CodexResult<String> {
-        let last_task_message = render_input_preview(&initial_operation);
+        let last_task_message = match &initial_operation {
+            Op::InterAgentCommunication { communication } => {
+                last_task_message_from_communication(communication)
+            }
+            _ => non_empty_task_message(render_input_preview(&initial_operation)),
+        };
         let state = self.upgrade()?;
         let result = self
             .handle_thread_request_result(
@@ -729,8 +731,12 @@ impl AgentControl {
             )
             .await;
         if result.is_ok() {
-            self.state
-                .update_last_task_message(agent_id, last_task_message);
+            match last_task_message {
+                Some(last_task_message) => self
+                    .state
+                    .update_last_task_message(agent_id, last_task_message),
+                None => self.state.clear_last_task_message(agent_id),
+            }
         }
         result
     }
@@ -740,7 +746,7 @@ impl AgentControl {
         agent_id: ThreadId,
         communication: InterAgentCommunication,
     ) -> CodexResult<String> {
-        let last_task_message = communication.content.clone();
+        let last_task_message = last_task_message_from_communication(&communication);
         let state = self.upgrade()?;
         let result = self
             .handle_thread_request_result(
@@ -752,8 +758,12 @@ impl AgentControl {
             )
             .await;
         if result.is_ok() {
-            self.state
-                .update_last_task_message(agent_id, last_task_message);
+            match last_task_message {
+                Some(last_task_message) => self
+                    .state
+                    .update_last_task_message(agent_id, last_task_message),
+                None => self.state.clear_last_task_message(agent_id),
+            }
         }
         result
     }
@@ -1331,6 +1341,17 @@ pub(crate) fn render_input_preview(initial_operation: &Op) -> String {
         Op::InterAgentCommunication { communication } => communication.content.clone(),
         _ => String::new(),
     }
+}
+
+fn last_task_message_from_communication(communication: &InterAgentCommunication) -> Option<String> {
+    if communication.encrypted_content.is_some() {
+        return None;
+    }
+    non_empty_task_message(communication.content.clone())
+}
+
+fn non_empty_task_message(message: String) -> Option<String> {
+    (!message.is_empty()).then_some(message)
 }
 
 fn thread_spawn_depth(session_source: &SessionSource) -> Option<i32> {

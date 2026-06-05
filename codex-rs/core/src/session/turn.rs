@@ -69,6 +69,7 @@ use codex_analytics::InvocationType;
 use codex_analytics::TurnResolvedConfigFact;
 use codex_analytics::build_track_events_context;
 use codex_async_utils::OrCancelExt;
+use codex_core_skills::injection::InjectedHostSkillPrompts;
 use codex_extension_api::TurnInputContext;
 use codex_extension_api::TurnInputEnvironment;
 use codex_features::Feature;
@@ -469,7 +470,7 @@ async fn build_skills_and_plugins(
         .collect::<Vec<_>>();
     let tracking = build_track_events_context(
         turn_context.model_info.slug.clone(),
-        sess.conversation_id.to_string(),
+        sess.thread_id.to_string(),
         turn_context.sub_id.clone(),
     );
     let loaded_plugins = sess
@@ -535,6 +536,9 @@ async fn build_skills_and_plugins(
     )
     .await;
 
+    let injected_host_skill_prompts = turn_context
+        .extension_data
+        .get::<InjectedHostSkillPrompts>();
     let SkillInjections {
         items: skill_injections,
         warnings: skill_warnings,
@@ -591,7 +595,16 @@ async fn build_skills_and_plugins(
             .track_plugin_used(tracking.clone(), plugin);
     }
 
-    let mut injection_items = skill_items;
+    let mut injection_items: Vec<ResponseItem> = match injected_host_skill_prompts {
+        Some(injected_host_skill_prompts) => skill_injections
+            .iter()
+            .filter(|skill| !injected_host_skill_prompts.contains_path(&skill.path))
+            .map(|skill| {
+                ContextualUserFragment::into(crate::context::SkillInstructions::from(skill))
+            })
+            .collect(),
+        None => skill_items,
+    };
     injection_items.extend(plugin_items);
     injection_items.extend(extension_injection_items);
     Some((injection_items, explicitly_enabled_connectors))
@@ -628,7 +641,7 @@ async fn build_extension_turn_input_items(
 
     let mut items = Vec::new();
     for contributor in contributors {
-        let contributed_items = contributor
+        let contributed_fragments = contributor
             .contribute(
                 input.clone(),
                 &sess.services.session_extension_data,
@@ -638,7 +651,11 @@ async fn build_extension_turn_input_items(
             .or_cancel(cancellation_token)
             .await
             .ok()?;
-        items.extend(contributed_items);
+        items.extend(
+            contributed_fragments
+                .into_iter()
+                .map(ContextualUserFragment::into_boxed_response_item),
+        );
     }
 
     Some(items)
@@ -661,7 +678,7 @@ async fn track_turn_resolved_config_analytics(
         .analytics_events_client
         .track_turn_resolved_config(TurnResolvedConfigFact {
             turn_id: turn_context.sub_id.clone(),
-            thread_id: sess.conversation_id.to_string(),
+            thread_id: sess.thread_id.to_string(),
             num_input_images: input
                 .iter()
                 .filter_map(|item| match item {
@@ -681,7 +698,7 @@ async fn track_turn_resolved_config_analytics(
             permission_profile: turn_context.permission_profile(),
             #[allow(deprecated)]
             permission_profile_cwd: turn_context.cwd.to_path_buf(),
-            reasoning_effort: turn_context.reasoning_effort,
+            reasoning_effort: turn_context.reasoning_effort.clone(),
             reasoning_summary: Some(turn_context.reasoning_summary),
             service_tier: turn_context
                 .config
@@ -1302,7 +1319,7 @@ impl ProposedPlanItemState {
             return;
         }
         let event = PlanDeltaEvent {
-            thread_id: sess.conversation_id.to_string(),
+            thread_id: sess.thread_id.to_string(),
             turn_id: turn_context.sub_id.clone(),
             item_id: self.item_id.clone(),
             delta: delta.to_string(),
@@ -1375,6 +1392,7 @@ pub(super) fn realtime_text_for_event(msg: &EventMsg) -> Option<String> {
         | EventMsg::RealtimeConversationClosed(_)
         | EventMsg::ModelReroute(_)
         | EventMsg::ModelVerification(_)
+        | EventMsg::TurnModerationMetadata(_)
         | EventMsg::ContextCompacted(_)
         | EventMsg::ThreadRolledBack(_)
         | EventMsg::TurnStarted(_)
@@ -1478,7 +1496,7 @@ async fn handle_plan_segments(
                 maybe_emit_pending_agent_message_start(sess, turn_context, state, item_id).await;
 
                 let event = AgentMessageContentDeltaEvent {
-                    thread_id: sess.conversation_id.to_string(),
+                    thread_id: sess.thread_id.to_string(),
                     turn_id: turn_context.sub_id.clone(),
                     item_id: item_id.to_string(),
                     delta,
@@ -1532,7 +1550,7 @@ async fn emit_streamed_assistant_text_delta(
         return;
     }
     let event = AgentMessageContentDeltaEvent {
-        thread_id: sess.conversation_id.to_string(),
+        thread_id: sess.thread_id.to_string(),
         turn_id: turn_context.sub_id.clone(),
         item_id: item_id.to_string(),
         delta: parsed.visible_text,
@@ -1782,7 +1800,7 @@ async fn try_run_sampling_request(
             prompt,
             &turn_context.model_info,
             &turn_context.session_telemetry,
-            turn_context.reasoning_effort,
+            turn_context.reasoning_effort.clone(),
             turn_context.reasoning_summary,
             turn_context.config.service_tier.clone(),
             turn_metadata_header,
@@ -1810,7 +1828,6 @@ async fn try_run_sampling_request(
         !sess.services.extensions.turn_item_contributors().is_empty();
     let mut active_item_is_streaming_to_client = false;
     let receiving_span = trace_span!("receiving_stream");
-    let mut completed_response_id: Option<String> = None;
     let outcome: CodexResult<SamplingRequestResult> = loop {
         let handle_responses = trace_span!(
             parent: &receiving_span,
@@ -1908,6 +1925,7 @@ async fn try_run_sampling_request(
                         role == "assistant" && matches!(phase, Some(MessagePhase::Commentary))
                     }
                     ResponseItem::Reasoning { .. } => true,
+                    ResponseItem::AgentMessage { .. } => false,
                     ResponseItem::LocalShellCall { .. }
                     | ResponseItem::FunctionCall { .. }
                     | ResponseItem::ToolSearchCall { .. }
@@ -2040,6 +2058,10 @@ async fn try_run_sampling_request(
                         .await;
                 }
             }
+            ResponseEvent::TurnModerationMetadata(metadata) => {
+                sess.emit_turn_moderation_metadata(&turn_context, metadata)
+                    .await;
+            }
             ResponseEvent::ServerReasoningIncluded(included) => {
                 sess.set_server_reasoning_included(included).await;
             }
@@ -2054,9 +2076,9 @@ async fn try_run_sampling_request(
                 sess.services.models_manager.refresh_if_new_etag(etag).await;
             }
             ResponseEvent::Completed {
-                response_id,
                 token_usage,
                 end_turn,
+                ..
             } => {
                 flush_assistant_text_segments_all(
                     &sess,
@@ -2072,7 +2094,6 @@ async fn try_run_sampling_request(
                 if let Some(false) = end_turn {
                     needs_follow_up = true;
                 }
-                completed_response_id = Some(response_id);
                 break Ok(SamplingRequestResult {
                     needs_follow_up,
                     last_agent_message,
@@ -2098,7 +2119,7 @@ async fn try_run_sampling_request(
                         .await;
                     } else {
                         let event = AgentMessageContentDeltaEvent {
-                            thread_id: sess.conversation_id.to_string(),
+                            thread_id: sess.thread_id.to_string(),
                             turn_id: turn_context.sub_id.clone(),
                             item_id,
                             delta,
@@ -2137,7 +2158,7 @@ async fn try_run_sampling_request(
                         continue;
                     }
                     let event = ReasoningContentDeltaEvent {
-                        thread_id: sess.conversation_id.to_string(),
+                        thread_id: sess.thread_id.to_string(),
                         turn_id: turn_context.sub_id.clone(),
                         item_id: active.id(),
                         delta,
@@ -2173,7 +2194,7 @@ async fn try_run_sampling_request(
                         continue;
                     }
                     let event = ReasoningRawContentDeltaEvent {
-                        thread_id: sess.conversation_id.to_string(),
+                        thread_id: sess.thread_id.to_string(),
                         turn_id: turn_context.sub_id.clone(),
                         item_id: active.id(),
                         delta,
@@ -2195,15 +2216,6 @@ async fn try_run_sampling_request(
         &mut assistant_message_stream_parsers,
     )
     .await;
-
-    if sess
-        .features
-        .enabled(Feature::ResponsesWebsocketResponseProcessed)
-        && outcome.is_ok()
-        && let Some(response_id) = completed_response_id.as_deref()
-    {
-        client_session.send_response_processed(response_id).await;
-    }
 
     drain_in_flight(&mut in_flight, sess.clone(), turn_context.clone()).await?;
 
