@@ -15,7 +15,11 @@
 > initial `upstream/main` migration at
 > `55aa071b17c825bdb66fac99cde2e7a7acfbdee7`; it is not a standard release
 > based on the current GitHub stable release `rust-v0.137.0`.
-> Future standardized Sticky releases should first sync an official stable tag.
+> Formal Sticky versions use `<upstream-version>-sticky.<revision>` without a
+> `v` prefix: `0.137.0` maps to OpenAI Codex `rust-v0.137.0`, and `-sticky.1`
+> means the first Sticky enhanced release for that upstream version. The
+> `0.137.0-sticky.1` release is prepared from a dedicated release branch based
+> on `rust-v0.137.0`, not by tagging the current initial-migration `main`.
 >
 > See [`docs/codex-sticky.md`](docs/codex-sticky.md) for user-facing Sticky
 > behavior and [`docs/codex-sticky/`](docs/codex-sticky/) for fork maintenance.
@@ -39,8 +43,22 @@ When a Sticky release is available, download the `codex-sticky` archive from
 this fork's GitHub Releases and install it under your user-local bin directory:
 
 ```shell
+curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh | bash
+```
+
+To pin a specific release, download the installer first so the version applies
+to the shell that runs it:
+
+```shell
+curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh -o /tmp/codex-sticky-install.sh
+CODEX_STICKY_VERSION=0.137.0-sticky.1 bash /tmp/codex-sticky-install.sh
+```
+
+Manual installation uses the same archive layout:
+
+```shell
 mkdir -p ~/.local/bin
-tar -xzf codex-sticky-<release-tag>-x86_64-unknown-linux-gnu.tar.gz
+tar -xzf codex-sticky-<version>-x86_64-unknown-linux-gnu.tar.gz
 install -m 0755 codex-sticky ~/.local/bin/codex-sticky
 ~/.local/bin/codex-sticky
 ```

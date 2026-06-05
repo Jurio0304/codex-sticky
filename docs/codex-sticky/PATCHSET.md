@@ -18,6 +18,11 @@ standard sync from `rust-v0.137.0`. The latest stable release value is recorded
 from the GitHub Releases API for future sync planning and must not be described
 as the exact base tag of the current code.
 
+Formal Sticky release tags omit a `v` prefix. For example, `0.137.0-sticky.1`
+means OpenAI Codex `rust-v0.137.0` plus the first Sticky enhancement patchset.
+That release is prepared from a release branch based on `rust-v0.137.0`, not by
+tagging the current initial-migration `main`.
+
 ## Release Target
 
 The current minimal release workflow builds `x86_64-unknown-linux-gnu`. A local

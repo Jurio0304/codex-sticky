@@ -9,10 +9,10 @@ Run local preflight checks for a Sticky release tag.
 This script never pushes, creates tags, creates releases, uploads files, or builds.
 
 Tag format:
-  v<upstream-version>-sticky.<revision>
+  <upstream-version>-sticky.<revision>
 
 Example:
-  v0.138.0-sticky.1
+  0.138.0-sticky.1
 USAGE
 }
 
@@ -76,7 +76,7 @@ reject_prerelease_version() {
     fail "sticky release must be based on a stable upstream version: $tag"
   fi
 
-  if [[ "$lower" =~ ^v[0-9]+([.][0-9]+)*(a|b|alpha|beta|rc|pre|preview)[0-9]+-sticky[.] ]]; then
+  if [[ "$lower" =~ ^[0-9]+([.][0-9]+)*(a|b|alpha|beta|rc|pre|preview)[0-9]+-sticky[.] ]]; then
     fail "sticky release must not use compact prerelease notation: $tag"
   fi
 }
@@ -88,8 +88,12 @@ require_sticky_release_tag() {
   [[ "$tag" != -* ]] || fail "tag must not start with '-'"
   git check-ref-format "refs/tags/$tag" >/dev/null 2>&1 || fail "invalid tag name: $tag"
 
-  if [[ ! "$tag" =~ ^v[0-9]+([.][0-9]+)*-sticky[.][0-9]+$ ]]; then
-    fail "tag must match v<upstream-version>-sticky.<revision>: $tag"
+  if [[ "$tag" == v* ]]; then
+    fail "sticky release tags must not use a 'v' prefix: $tag"
+  fi
+
+  if [[ ! "$tag" =~ ^[0-9]+[.][0-9]+[.][0-9]+-sticky[.][1-9][0-9]*$ ]]; then
+    fail "tag must match <upstream-version>-sticky.<revision> with revision >= 1, for example 0.137.0-sticky.1: $tag"
   fi
 
   reject_prerelease_version "$tag"
@@ -118,6 +122,7 @@ check_required_files() {
     "docs/codex-sticky/MAINTENANCE.md"
     "docs/codex-sticky/RELEASING.md"
     "docs/codex-sticky/GITHUB_SETTINGS.md"
+    "scripts/install.sh"
     "scripts/sticky/sync-upstream.sh"
     "scripts/sticky/check-release.sh"
     ".github/workflows/sticky-ci.yml"

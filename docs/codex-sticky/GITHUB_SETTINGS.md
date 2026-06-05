@@ -26,10 +26,10 @@ Use minimal workflow permissions:
 - Upstream watch: `contents: read`, `issues: write` only for reminder issues.
 
 Preserve historical tags, especially `v0.1.0`. New release tags use
-`v<upstream-version>-sticky.<revision>` and must not overwrite or delete old
+`<upstream-version>-sticky.<revision>` and must not overwrite or delete old
 Sticky tags. Do not create a Sticky release tag for the current initial
-`upstream/main` migration; wait until an official stable tag has been explicitly
-synced and reviewed.
+`upstream/main` migration; prepare `0.137.0-sticky.1` from `rust-v0.137.0` on a
+dedicated release branch, then tag only after review.
 
 ## Automation Boundaries
 

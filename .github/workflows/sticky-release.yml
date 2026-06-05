@@ -2,8 +2,7 @@ name: sticky-release
 
 on:
   push:
-    tags:
-      - "v*-sticky.*"
+    tags: ["*-sticky.*"]
 
 permissions:
   contents: write
@@ -31,8 +30,12 @@ jobs:
           set -euo pipefail
           tag="${GITHUB_REF_NAME}"
           lower="${tag,,}"
-          if [[ ! "$tag" =~ ^v[0-9]+(\.[0-9]+)*-sticky\.[0-9]+$ ]]; then
-            echo "Tag must match v<upstream-version>-sticky.<revision>: $tag" >&2
+          if [[ "$tag" == v* ]]; then
+            echo "Sticky release tags must not use a v prefix: $tag" >&2
+            exit 1
+          fi
+          if [[ ! "$tag" =~ ^[0-9]+\.[0-9]+\.[0-9]+-sticky\.[1-9][0-9]*$ ]]; then
+            echo "Tag must match <upstream-version>-sticky.<revision> with revision >= 1: $tag" >&2
             exit 1
           fi
           if [[ "$lower" =~ (alpha|beta|rc|pre|preview|canary|nightly|dev) ]]; then
@@ -60,6 +63,7 @@ jobs:
           cp ../LICENSE ../NOTICE "$package_dir/"
           tar -C "$package_dir" -czf "$archive" codex-sticky LICENSE NOTICE
           (cd "$RUNNER_TEMP" && sha256sum "$archive_name" > SHA256SUMS)
+          (cd "$RUNNER_TEMP" && sha256sum -c SHA256SUMS)
 
           echo "archive=$archive" >> "$GITHUB_OUTPUT"
           echo "checksums=$checksums" >> "$GITHUB_OUTPUT"
