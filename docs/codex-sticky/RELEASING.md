@@ -3,7 +3,7 @@
 Codex Sticky releases are unofficial fork releases; they are not OpenAI releases
 and are not maintained, sponsored, or endorsed by OpenAI.
 
-## Version Names
+## Version Name
 
 Use:
 
@@ -11,41 +11,44 @@ Use:
 <upstream-version>-sticky.<revision>
 ```
 
-The upstream version must come from an official stable tag that was explicitly
-selected for a release branch or synced into Sticky main. For example, after
-selecting `rust-v0.138.0`, the first Sticky release would be
-`0.138.0-sticky.1`. `0.137.0` means the OpenAI Codex official `rust-v0.137.0`
-release; `-sticky.1` means the first Sticky enhanced release on top of that
-upstream version. Preserve historical `v0.1.0`; never delete, overwrite, or
-reuse it for the new scheme.
+For the first formal release, `0.137.0-sticky.1` means:
 
-The current Sticky `main` is an initial `upstream/main` migration, not a
-standard release based on `rust-v0.137.0`. Do not create a current release tag
-and do not name this code `0.137.0-sticky.1`. Prepare `0.137.0-sticky.1` on a
-dedicated `release/0.137.0-sticky.1` branch based on `rust-v0.137.0`, then carry
-only the reviewed Sticky patchset, required tests, GNU release workflow,
-installer, and necessary fork docs.
+- `0.137.0` maps to the official OpenAI Codex tag `rust-v0.137.0`.
+- `-sticky.1` is the first Sticky enhancement patchset on top of that tag.
 
-## Preflight
+Do not use a `v` prefix for new Sticky releases. Preserve historical `v0.1.0`;
+never delete, overwrite, or reuse it for the new scheme.
 
-Before creating a release tag:
+## Manual Release Flow
 
-```bash
-bash scripts/sticky/check-release.sh 0.137.0-sticky.1
+Codex Sticky uses local builds and manual GitHub Release uploads. The former GitHub Actions release workflow has been removed because the first
+tag-triggered build was not stable enough for this fork.
+
+Release steps:
+
+```text
+1. Create and push a fixed release tag such as 0.137.0-sticky.1.
+2. Build and package locally on the maintainer machine.
+3. Verify SHA256SUMS and archive contents locally.
+4. Open GitHub Releases and choose Draft a new release.
+5. Select the existing tag.
+6. Upload the tar.gz archive and SHA256SUMS.
+7. Publish release after verifying the draft metadata and assets.
 ```
 
-The script is only a guardrail. It must not push tags, create GitHub Releases,
-upload binaries, build artifacts, or modify GitHub settings.
+Do not overwrite an already published tag. If a release needs a rebuild after
+publication, use a new Sticky revision such as `0.137.0-sticky.2`.
 
 ## Artifacts
 
-Start with one Linux x86_64 package using `x86_64-unknown-linux-gnu`. Local
-validation of `x86_64-unknown-linux-musl` failed because the Rusty V8 musl
-prebuilt archive was unavailable or unstable during download, so the first-stage
-Sticky release workflow uses the host GNU build path. Re-evaluate musl later only
-if the Rusty V8 assets become reliable.
+The current package scope is one Linux x86_64 GNU archive:
 
-Each archive contains:
+```text
+codex-sticky-0.137.0-sticky.1-x86_64-unknown-linux-gnu.tar.gz
+SHA256SUMS
+```
+
+The archive is flat and contains:
 
 ```text
 codex-sticky
@@ -53,7 +56,8 @@ LICENSE
 NOTICE
 ```
 
-Publish `SHA256SUMS` for downloadable artifacts.
+`SHA256SUMS` records the archive basename so users can run
+`sha256sum -c SHA256SUMS` in the download directory.
 
 ## Install Path
 
@@ -61,13 +65,21 @@ Do not replace official `codex`. Install this fork side by side:
 
 ```bash
 mkdir -p ~/.local/bin
-tar -xzf codex-sticky-<version>-x86_64-unknown-linux-gnu.tar.gz
+tar -xzf codex-sticky-0.137.0-sticky.1-x86_64-unknown-linux-gnu.tar.gz
 install -m 0755 codex-sticky ~/.local/bin/codex-sticky
 ~/.local/bin/codex-sticky
+```
+
+Or use the installer:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh -o /tmp/codex-sticky-install.sh
+CODEX_STICKY_VERSION=0.137.0-sticky.1 bash /tmp/codex-sticky-install.sh
 ```
 
 ## Boundaries
 
 A Sticky release must not push to `upstream`, modify OpenAI releases, delete old
-tags, overwrite `v0.1.0`, publish hidden artifacts, or copy the official complex
-multi-platform pipeline without a clear maintenance need.
+tags, overwrite `v0.1.0`, overwrite published Sticky tags, publish hidden
+artifacts, or copy the official complex multi-platform pipeline without a clear
+maintenance need.

@@ -22,8 +22,10 @@ Recommended `main` protections:
 Use minimal workflow permissions:
 
 - CI: `contents: read`.
-- Release: `contents: write` only to create a release for an existing Sticky tag.
 - Upstream watch: `contents: read`, `issues: write` only for reminder issues.
+
+The former GitHub Actions release workflow has been removed. Release assets are
+uploaded manually through the GitHub Release draft UI.
 
 Preserve historical tags, especially `v0.1.0`. New release tags use
 `<upstream-version>-sticky.<revision>` and must not overwrite or delete old
@@ -35,4 +37,4 @@ dedicated release branch, then tag only after review.
 
 Workflows and scripts must not push branches, force-push, merge upstream, create
 PRs, create tags, upload hidden artifacts, modify GitHub settings, or publish a
-release except for the explicit tag-triggered Sticky release workflow.
+release. Sticky Releases are drafted and published manually from existing tags.
