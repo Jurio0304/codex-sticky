@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-06-05T20:55:43+08:00",
+  "repository": "openai/codex",
+  "fork_repository": "Jurio0304/codex-sticky",
+  "synced_ref": "upstream/main",
+  "synced_commit": "55aa071b17c825bdb66fac99cde2e7a7acfbdee7",
+  "sticky_main_commit": "25ac28fa5ef0052d8c82aa410606abc532a38a2c",
+  "latest_stable_release": {
+    "tag": "rust-v0.137.0",
+    "version": "0.137.0",
+    "draft": false,
+    "prerelease": false,
+    "published_at": "2026-06-04T01:17:20Z",
+    "verified_from": "GitHub Releases API repos/openai/codex/releases?per_page=30 filtered for non-draft non-prerelease releases"
+  },
+  "sync_mode": "initial-main-migration",
+  "future_sync_policy": "stable-release-tags",
+  "notes": [
+    "Current Sticky main was created from an initial upstream/main migration, not from the latest stable release tag.",
+    "latest_stable_release records the current GitHub stable release to watch for future syncs; it is not the exact base tag of this Sticky code.",
+    "Future standardized Sticky releases should be created only after explicitly syncing an official stable release tag.",
+    "Historical sticky tag v0.1.0 must be preserved and never overwritten or deleted."
+  ]
+}
