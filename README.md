@@ -1,6 +1,6 @@
 <div align="center">
   <img src="docs/assets/readme/codex-sticky-logo.svg" alt="Codex Sticky logo" width="96" />
-  <h1>🧲 Codex Sticky</h1>
+  <h1><img src="docs/assets/readme/codex-sticky-logo.svg" alt="" width="36" /> Codex Sticky</h1>
   <p><a href="./README.zh-CN.md">简体中文</a> | English</p>
   <p><strong>A lightweight terminal-first enhancement for OpenAI Codex CLI.</strong></p>
   <p>
@@ -229,23 +229,23 @@ This keeps the fork lightweight, but it also means Codex Sticky can be behind th
 
 ## ❓ FAQ
 
-### Will it overwrite official `codex`?
+### 1. Will it overwrite official `codex`?
 
 No. The installer writes `~/.local/bin/codex-sticky` and does not install or overwrite a binary named `codex`.
 
-### Why install official Codex CLI first?
+### 2. Why install official Codex CLI first?
 
 Codex Sticky is a small enhancement, not a full replacement. Installing official Codex first confirms that your account, authentication, model access, and base CLI workflow already work before you add this side-by-side binary.
 
-### Why only Linux x86_64 GNU right now?
+### 3. Why only Linux x86_64 GNU right now?
 
 The first formal release focuses on the environment this fork is meant to serve best: terminal, SSH, tmux, and remote Linux server workflows. macOS, Windows, ARM64, musl, and broader release automation are deferred until they can be supported without expanding maintenance cost too much.
 
-### Why does `codex-sticky --version` still show `codex-cli 0.137.0`?
+### 4. Why does `codex-sticky --version` still show `codex-cli 0.137.0`?
 
 The binary is based on the upstream Codex CLI version, so the CLI version output may still show the upstream package identity. The Sticky version is tracked by the GitHub Release tag and asset name, for example `0.137.0-sticky.1`.
 
-### Will Codex Sticky sync OpenAI Codex updates?
+### 5. Will Codex Sticky sync OpenAI Codex updates?
 
 Yes, but in planned stages rather than every upstream commit.
 
