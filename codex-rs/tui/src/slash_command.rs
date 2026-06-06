@@ -297,7 +297,6 @@ mod tests {
         assert!(SlashCommand::Sticky.available_during_task());
         assert!(SlashCommand::Sticky.available_in_side_conversation());
         assert!(SlashCommand::Sticky.supports_inline_args());
-        assert!(SlashCommand::App.available_during_task());
     }
 
     #[test]

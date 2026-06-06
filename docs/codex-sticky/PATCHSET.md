@@ -1,52 +1,46 @@
 # Codex Sticky Patchset
 
 Codex Sticky is an unofficial lightweight fork of `openai/codex`; it is not
-maintained, sponsored, or endorsed by OpenAI. The goal is a thin, low-cost
-patchset that can periodically sync with official stable Codex releases.
+maintained, sponsored, or endorsed by OpenAI. This release branch keeps the
+patchset narrow so future stable upstream releases can be reviewed with low
+maintenance cost.
 
-## Baseline
+## Release Baseline
 
 - Official repository: `openai/codex`
 - Sticky fork: `Jurio0304/codex-sticky`
-- Synced ref: `upstream/main`
-- Synced commit: `55aa071b17c825bdb66fac99cde2e7a7acfbdee7`
-- `origin/main` / Sticky main: `25ac28fa5ef0052d8c82aa410606abc532a38a2c`
-- GitHub latest stable release: `rust-v0.137.0` (`0.137.0`)
+- Release branch: `release/0.137.0-sticky.1`
+- Upstream base tag: `rust-v0.137.0`
+- Upstream base commit: `f221438b691b8f749d98f22077c93ebe01923fbe`
+- Sticky release version: `0.137.0-sticky.1`
 
-The current Sticky code comes from an initial `upstream/main` migration, not a
-standard sync from `rust-v0.137.0`. The latest stable release value is recorded
-from the GitHub Releases API for future sync planning and must not be described
-as the exact base tag of the current code.
+`0.137.0-sticky.1` means OpenAI Codex `rust-v0.137.0` plus the first Sticky
+enhancement patchset for that upstream version. Formal Sticky release tags omit
+the `v` prefix. Preserve the historical `v0.1.0` tag; never delete, overwrite,
+or reuse it for the new scheme.
 
-Formal Sticky release tags omit a `v` prefix. For example, `0.137.0-sticky.1`
-means OpenAI Codex `rust-v0.137.0` plus the first Sticky enhancement patchset.
-That release is prepared from a release branch based on `rust-v0.137.0`, not by
-tagging the current initial-migration `main`.
+## Included Patch Areas
+
+This release branch intentionally carries only:
+
+- Sticky Transcript TUI behavior and tests,
+- the minimal Linux x86_64 GNU release workflow,
+- the `scripts/install.sh` installer for published release assets,
+- release/user notes under `docs/codex-sticky/`, and
+- README installation/disclaimer notes for this fork.
+
+It does not merge Sticky `main`, `chore/sticky-maintenance-infra`, or unrelated
+`upstream/main` development commits wholesale.
 
 ## Release Target
 
-The current minimal release workflow builds `x86_64-unknown-linux-gnu`. A local
-`x86_64-unknown-linux-musl` validation failed because the Rusty V8 musl prebuilt
-archive was unavailable or unstable during download, so musl is deferred until it
-can be re-evaluated without adding maintenance complexity.
-
-## Patch Areas
-
-Keep fork changes concentrated in:
-
-- Sticky Transcript TUI behavior and tests,
-- the `codex-sticky` entry point or install wrapper,
-- minimal maintenance scripts and GitHub Actions,
-- fork-specific notes under `docs/codex-sticky/`.
+The release workflow builds `x86_64-unknown-linux-gnu`. Local validation of
+`x86_64-unknown-linux-musl` failed because the Rusty V8 musl prebuilt archive
+was unavailable or unstable during download, so musl is deferred until it can be
+re-evaluated without adding maintenance complexity.
 
 ## Non-Goals
 
-Do not replace official `codex`, chase every `upstream/main` commit, copy the
-full official multi-platform release pipeline without need, add broad product
-docs to shared `docs/`, or delete/overwrite the historical `v0.1.0` tag.
-
-## Review Checklist
-
-Before merging, confirm the diff is thin, official Codex remains available as
-`codex`, automation does not push/merge/tag unexpectedly, and any public surface
-has a clear maintenance reason.
+Do not replace official `codex`, copy the full official multi-platform release
+pipeline, push tags automatically, upload hidden artifacts, or publish anything
+without an explicit human release decision.

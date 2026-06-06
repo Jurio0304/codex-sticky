@@ -1,28 +1,17 @@
 > **Unofficial lightweight fork: Codex Sticky**
 >
 > This repository is an unofficial community fork of `openai/codex`.
-> It adds an optional Sticky Transcript TUI mode and is not maintained,
+> It adds optional Sticky Transcript TUI behavior and is not maintained,
 > sponsored, or endorsed by OpenAI.
 >
-> - `origin/main`: Sticky's long-term maintenance branch.
-> - `upstream/main`: OpenAI's official baseline for comparison and syncs.
-> - `codex`: official Codex CLI behavior remains available.
-> - `codex-sticky`: Sticky Transcript enabled by default, installed side by
->   side at `~/.local/bin/codex-sticky` without replacing official `codex`.
+> This release branch is based on the official OpenAI Codex tag
+> `rust-v0.137.0`. Formal Sticky versions omit a `v` prefix:
+> `0.137.0-sticky.1` means OpenAI Codex `rust-v0.137.0` plus the first
+> Sticky enhancement patchset for that upstream version.
 >
-> Sticky maintenance tracks official stable tags periodically instead of
-> continuously chasing `upstream/main`. Current Sticky code comes from an
-> initial `upstream/main` migration at
-> `55aa071b17c825bdb66fac99cde2e7a7acfbdee7`; it is not a standard release
-> based on the current GitHub stable release `rust-v0.137.0`.
-> Formal Sticky versions use `<upstream-version>-sticky.<revision>` without a
-> `v` prefix: `0.137.0` maps to OpenAI Codex `rust-v0.137.0`, and `-sticky.1`
-> means the first Sticky enhanced release for that upstream version. The
-> `0.137.0-sticky.1` release is prepared from a dedicated release branch based
-> on `rust-v0.137.0`, not by tagging the current initial-migration `main`.
->
-> See [`docs/codex-sticky.md`](docs/codex-sticky.md) for user-facing Sticky
-> behavior and [`docs/codex-sticky/`](docs/codex-sticky/) for fork maintenance.
+> The official `codex` command remains available. The fork binary is installed
+> side by side as `~/.local/bin/codex-sticky` and does not replace `codex`.
+> See [`docs/codex-sticky.md`](docs/codex-sticky.md) for behavior details.
 
 <p align="center"><strong>Codex CLI</strong> is a coding agent from OpenAI that runs locally on your computer.
 <p align="center">
@@ -37,34 +26,32 @@ If you want Codex in your code editor (VS Code, Cursor, Windsurf), <a href="http
 
 ## Quickstart
 
-### Installing Codex Sticky from this fork
+### Installing Codex Sticky
 
-When a Sticky release is available, download the `codex-sticky` archive from
-this fork's GitHub Releases and install it under your user-local bin directory:
+When the `0.137.0-sticky.1` GitHub Release exists, install the latest
+`codex-sticky` Linux x86_64 GNU package with:
 
 ```shell
 curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh | bash
 ```
 
-To pin a specific release, download the installer first so the version applies
-to the shell that runs it:
+To pin this release explicitly:
 
 ```shell
 curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh -o /tmp/codex-sticky-install.sh
 CODEX_STICKY_VERSION=0.137.0-sticky.1 bash /tmp/codex-sticky-install.sh
 ```
 
-Manual installation uses the same archive layout:
+Manual installation uses the same flat archive layout:
 
 ```shell
 mkdir -p ~/.local/bin
-tar -xzf codex-sticky-<version>-x86_64-unknown-linux-gnu.tar.gz
+tar -xzf codex-sticky-0.137.0-sticky.1-x86_64-unknown-linux-gnu.tar.gz
 install -m 0755 codex-sticky ~/.local/bin/codex-sticky
 ~/.local/bin/codex-sticky
 ```
 
-This intentionally does not overwrite the official `codex` command. Keep both
-commands side by side if you use the official CLI too.
+This intentionally does not overwrite the official `codex` command.
 
 ### Installing and running official Codex CLI
 
@@ -121,9 +108,7 @@ You can also use Codex with an API key, but this requires [additional setup](htt
 - [**Codex Documentation**](https://developers.openai.com/codex)
 - [**Sticky Transcript user notes**](./docs/codex-sticky.md)
 - [**Sticky patchset**](./docs/codex-sticky/PATCHSET.md)
-- [**Sticky maintenance**](./docs/codex-sticky/MAINTENANCE.md)
 - [**Sticky releasing**](./docs/codex-sticky/RELEASING.md)
-- [**Sticky GitHub settings**](./docs/codex-sticky/GITHUB_SETTINGS.md)
 - [**Contributing**](./docs/contributing.md)
 - [**Installing & building**](./docs/install.md)
 - [**Open source fund**](./docs/open-source-fund.md)
