@@ -65,12 +65,19 @@ git fetch upstream --tags
 -> git switch -c release/0.137.0-sticky.1 rust-v0.137.0
 -> transplant the minimal Sticky patchset
 -> test and package locally
--> create 0.137.0-sticky.1 only after review
+-> create and push 0.137.0-sticky.1 only after review
+-> draft a GitHub Release manually
+-> upload the tar.gz archive and SHA256SUMS
+-> publish after verifying the draft assets
 ```
+
+Releases are built locally and uploaded manually. The former GitHub Actions release workflow has been removed. Current published artifacts are limited to the Linux x86_64 GNU
+package.
 
 Do not create a release tag from the current initial migration, and do not name
 the current `main` code `0.137.0-sticky.1`. Later releases should explicitly
-sync an official stable tag before creating `<upstream-version>-sticky.<n>`.
+sync an official stable tag before creating `<upstream-version>-sticky.<n>`. Do
+not overwrite an already published tag; use the next Sticky revision for rebuilds.
 
 ## Baseline Updates
 

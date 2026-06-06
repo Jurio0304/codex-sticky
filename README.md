@@ -28,8 +28,9 @@ If you want Codex in your code editor (VS Code, Cursor, Windsurf), <a href="http
 
 ### Installing Codex Sticky
 
-When the `0.137.0-sticky.1` GitHub Release exists, install the latest
-`codex-sticky` Linux x86_64 GNU package with:
+Sticky releases are built locally by a maintainer and uploaded manually to
+GitHub Releases. Install the latest `codex-sticky` Linux x86_64 GNU package
+with:
 
 ```shell
 curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh | bash
@@ -42,7 +43,7 @@ curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts
 CODEX_STICKY_VERSION=0.137.0-sticky.1 bash /tmp/codex-sticky-install.sh
 ```
 
-Manual installation uses the same flat archive layout:
+Manual installation uses the uploaded flat archive layout:
 
 ```shell
 mkdir -p ~/.local/bin

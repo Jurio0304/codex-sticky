@@ -3,9 +3,9 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: scripts/sticky/check-release.sh [sticky-release-tag]
+Usage: scripts/sticky/check-release.sh [release-version]
 
-Run local preflight checks for a Sticky release tag.
+Run local preflight checks for a manual Sticky release.
 This script never pushes, creates tags, creates releases, uploads files, or builds.
 
 Tag format:
@@ -126,7 +126,6 @@ check_required_files() {
     "scripts/sticky/sync-upstream.sh"
     "scripts/sticky/check-release.sh"
     ".github/workflows/sticky-ci.yml"
-    ".github/workflows/sticky-release.yml"
     ".github/workflows/upstream-watch.yml"
   )
 
@@ -140,7 +139,7 @@ print_artifact_guidance() {
   local tag="$1"
   cat <<GUIDANCE
 
-Artifact naming guidance only; no build or release was performed:
+Artifact naming guidance only; no build, upload, or release was performed:
   - binary inside archive: codex-sticky
   - Linux archive:          codex-sticky-${tag}-x86_64-unknown-linux-gnu.tar.gz
   - checksum file:          SHA256SUMS
@@ -166,7 +165,7 @@ main() {
 
   info "Sticky release preflight passed for $tag"
   print_artifact_guidance "$tag"
-  info "No push, tag creation, GitHub release, upload, or build was performed."
+  info "No push, tag creation, upload, release publication, or build was performed."
 }
 
 main "$@"
