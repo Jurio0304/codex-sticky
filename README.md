@@ -1,14 +1,18 @@
-# Codex Sticky
-
-[简体中文](./README.zh-CN.md) | English
-
-A lightweight terminal-first enhancement for OpenAI Codex CLI.
+<div align="center">
+  <img src="docs/assets/readme/codex-sticky-logo.svg" alt="Codex Sticky logo" width="96" />
+  <h1>🧲 Codex Sticky</h1>
+  <p><a href="./README.zh-CN.md">简体中文</a> | English</p>
+  <p><strong>A lightweight terminal-first enhancement for OpenAI Codex CLI.</strong></p>
+  <p>
+    <img alt="Terminal-first" src="https://img.shields.io/badge/terminal--first-0f766e" />
+    <img alt="Linux x86_64 GNU" src="https://img.shields.io/badge/Linux-x86__64%20GNU-111827" />
+    <img alt="Unofficial fork" src="https://img.shields.io/badge/unofficial-fork-f97316" />
+  </p>
+</div>
 
 Codex Sticky keeps the Codex experience close to upstream while making long terminal sessions easier to drive: scroll back through older transcript content without losing access to the composer, stay productive over SSH and tmux, and install it side by side with the official `codex` command.
 
-Codex Sticky is an unofficial lightweight enhanced build of OpenAI Codex CLI. It is not affiliated with, maintained by, sponsored by, or endorsed by OpenAI. It is not a full replacement for official Codex CLI; it adds small interaction improvements on top of an upstream Codex CLI baseline for terminal-heavy workflows.
-
-## Core Features
+## ✨ Core Features
 
 - Keeps the composer/input area reachable while browsing older transcript content.
 - Improves long-conversation usability in pure terminal sessions.
@@ -16,15 +20,17 @@ Codex Sticky is an unofficial lightweight enhanced build of OpenAI Codex CLI. It
 - Installs as `codex-sticky` without overwriting the official `codex` binary.
 - Tracks upstream with a thin patchset to keep maintenance cost low.
 
-## Demo
+## 🎬 Demo
 
-<!-- TODO: Add terminal demo GIF at docs/assets/readme/codex-sticky-demo.gif -->
-<!-- TODO: Add Sticky Transcript before/after comparison at docs/assets/readme/sticky-transcript-before-after.png -->
-<!-- TODO: Add tmux / SSH demo video thumbnail at docs/assets/readme/tmux-ssh-demo-thumbnail.png -->
+【TODO: Add terminal demo GIF at `docs/assets/readme/codex-sticky-demo.gif`】
 
-Media placeholders live under `docs/assets/readme/`. No missing images are referenced yet.
+【TODO: Add Sticky Transcript before/after comparison at `docs/assets/readme/sticky-transcript-before-after.png`】
 
-## Who It Is For
+【TODO: Add tmux / SSH demo video thumbnail at `docs/assets/readme/tmux-ssh-demo-thumbnail.png`】
+
+No missing images are referenced yet.
+
+## 👤 Who It Is For
 
 Codex Sticky is most useful if you:
 
@@ -33,7 +39,7 @@ Codex Sticky is most useful if you:
 - often work with long agent conversations and need to read earlier output;
 - want a small side-by-side enhancement instead of replacing your official Codex CLI install.
 
-## Current Support And Limits
+## 🧭 Current Support And Limits
 
 Current formal release: `0.137.0-sticky.1`.
 
@@ -56,7 +62,7 @@ Not provided today:
 
 The GNU package expects a normal Linux glibc environment. Codex Sticky may lag behind the latest OpenAI Codex release; this project syncs selected stable upstream versions in stages instead of tracking every upstream commit.
 
-## Quick Start
+## 🚀 Quick Start
 
 ### 0. Install Official Codex CLI First
 
@@ -157,7 +163,7 @@ alias codex='codex-sticky'
 
 This is optional. The default install keeps official `codex` untouched.
 
-## Running And Switching
+## 🔀 Running And Switching
 
 Run official Codex CLI:
 
@@ -191,7 +197,7 @@ Inside the TUI, Sticky Transcript can also be toggled for the current session:
 /sticky status
 ```
 
-## Updating
+## ⬆️ Updating
 
 Use the installer again when a later Sticky release is published:
 
@@ -199,19 +205,13 @@ Use the installer again when a later Sticky release is published:
 curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh | bash
 ```
 
-To install a specific Sticky version:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh \
-  -o install-codex-sticky.sh
-CODEX_STICKY_VERSION=0.137.0-sticky.1 bash install-codex-sticky.sh
-```
+To install a specific Sticky version, reuse the same script and set `CODEX_STICKY_VERSION`.
 
 There is no automatic updater today. Check GitHub Releases for new versions:
 
 <https://github.com/Jurio0304/codex-sticky/releases>
 
-## Uninstalling
+## 🧹 Uninstalling
 
 Remove the side-by-side binary:
 
@@ -221,28 +221,13 @@ rm ~/.local/bin/codex-sticky
 
 If you added an alias, remove that alias from your shell profile too. The official `codex` binary is not removed by this command.
 
-## Version Rule
-
-Sticky release names use:
-
-```text
-<upstream-codex-version>-sticky.<revision>
-```
-
-For `0.137.0-sticky.1`:
-
-- `0.137.0` is the OpenAI Codex baseline.
-- `sticky.1` is the first Sticky patchset for that baseline.
-
-New Sticky release tags do not use a `v` prefix.
-
-## Upstream Sync Policy
+## 🔄 Upstream Sync Policy
 
 Codex Sticky aims to stay close to `openai/codex` while preserving a small terminal-workflow patchset. It does not chase every upstream commit. Instead, maintainers periodically choose stable upstream releases, review the delta, and publish a Sticky revision when the patchset is ready.
 
 This keeps the fork lightweight, but it also means Codex Sticky can be behind the latest OpenAI Codex version.
 
-## FAQ
+## ❓ FAQ
 
 ### Will it overwrite official `codex`?
 
@@ -262,12 +247,12 @@ The binary is based on the upstream Codex CLI version, so the CLI version output
 
 ### Will Codex Sticky sync OpenAI Codex updates?
 
-Yes, but in stages. The project follows selected stable upstream versions rather than every commit, so it may temporarily lag behind the latest OpenAI Codex release.
+Yes, but in planned stages rather than every upstream commit.
 
-## Disclaimer
+## ⚠️ Disclaimer
 
 Codex Sticky is an unofficial community fork of OpenAI Codex CLI. It is not an OpenAI product and is not maintained, sponsored, endorsed, or supported by OpenAI. Use the official OpenAI Codex CLI and documentation for the authoritative upstream project.
 
-## License
+## 📄 License
 
 This repository is licensed under the [Apache-2.0 License](LICENSE).
