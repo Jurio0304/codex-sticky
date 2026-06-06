@@ -20,8 +20,8 @@
   <circle cx="36" cy="42" r="3" fill="#f97316"/>
   <circle cx="48" cy="42" r="3" fill="#fbbf24"/>
   <circle cx="60" cy="42" r="3" fill="#5eead4"/>
-  <text x="34" y="70" fill="#5eead4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="27" font-weight="700">&gt;_</text>
+  <path d="M34 56l12 9-12 9" fill="none" stroke="#5eead4" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M58 58h30M58 72h22" stroke="#64748b" stroke-width="5" stroke-linecap="round"/>
   <rect x="30" y="80" width="68" height="14" rx="7" fill="url(#sticky)"/>
   <text x="40" y="90" fill="#042f2e" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" font-weight="800">/sticky</text>
-  <path d="M92 80v14" stroke="#99f6e4" stroke-width="3" stroke-linecap="round"/>
 </svg>

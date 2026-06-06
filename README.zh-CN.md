@@ -1,6 +1,6 @@
 <div align="center">
   <img src="docs/assets/readme/codex-sticky-logo.svg" alt="Codex Sticky logo" width="96" />
-  <h1><img src="docs/assets/readme/codex-sticky-logo.svg" alt="" width="36" /> Codex Sticky</h1>
+  <h1>Codex Sticky</h1>
   <p>简体中文 | <a href="./README.md">English</a></p>
   <p><strong>面向终端优先工作流的 OpenAI Codex CLI 轻量增强版。</strong></p>
   <p>
