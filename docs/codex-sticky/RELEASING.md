@@ -11,28 +11,37 @@ Use:
 <upstream-version>-sticky.<revision>
 ```
 
-For this branch, the release version is `0.137.0-sticky.1`:
+For the first formal release, `0.137.0-sticky.1` means:
 
 - `0.137.0` maps to the official OpenAI Codex tag `rust-v0.137.0`.
-- `-sticky.1` means the first Sticky enhancement patchset on top of that tag.
+- `-sticky.1` is the first Sticky enhancement patchset on top of that tag.
 
 Do not use a `v` prefix for new Sticky releases. Preserve historical `v0.1.0`;
 never delete, overwrite, or reuse it for the new scheme.
 
-## Expected Tag
+## Manual Release Flow
 
-Only after review and validation, a maintainer may create the local/remote tag:
+Codex Sticky uses local builds and manual GitHub Release uploads. The former GitHub Actions release workflow has been removed because the first
+tag-triggered build was not stable enough for this fork.
+
+Release steps:
 
 ```text
-0.137.0-sticky.1
+1. Create and push a fixed release tag such as 0.137.0-sticky.1.
+2. Build and package locally on the maintainer machine.
+3. Verify SHA256SUMS and archive contents locally.
+4. Open GitHub Releases and choose Draft a new release.
+5. Select the existing tag.
+6. Upload the tar.gz archive and SHA256SUMS.
+7. Publish release after verifying the draft metadata and assets.
 ```
 
-The release workflow rejects any `v`-prefixed Sticky tag, prerelease strings,
-and revision `0`.
+Do not overwrite an already published tag. If a release needs a rebuild after
+publication, use a new Sticky revision such as `0.137.0-sticky.2`.
 
 ## Artifacts
 
-This first-stage workflow builds one Linux x86_64 GNU package:
+The current package scope is one Linux x86_64 GNU archive:
 
 ```text
 codex-sticky-0.137.0-sticky.1-x86_64-unknown-linux-gnu.tar.gz
@@ -71,5 +80,6 @@ CODEX_STICKY_VERSION=0.137.0-sticky.1 bash /tmp/codex-sticky-install.sh
 ## Boundaries
 
 A Sticky release must not push to `upstream`, modify OpenAI releases, delete old
-tags, overwrite `v0.1.0`, publish hidden artifacts, or copy the official complex
-multi-platform pipeline without a clear maintenance need.
+tags, overwrite `v0.1.0`, overwrite published Sticky tags, publish hidden
+artifacts, or copy the official complex multi-platform pipeline without a clear
+maintenance need.
