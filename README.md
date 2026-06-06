@@ -1,117 +1,273 @@
-> **Unofficial lightweight fork: Codex Sticky**
->
-> This repository is an unofficial community fork of `openai/codex`.
-> It adds optional Sticky Transcript TUI behavior and is not maintained,
-> sponsored, or endorsed by OpenAI.
->
-> This release branch is based on the official OpenAI Codex tag
-> `rust-v0.137.0`. Formal Sticky versions omit a `v` prefix:
-> `0.137.0-sticky.1` means OpenAI Codex `rust-v0.137.0` plus the first
-> Sticky enhancement patchset for that upstream version.
->
-> The official `codex` command remains available. The fork binary is installed
-> side by side as `~/.local/bin/codex-sticky` and does not replace `codex`.
-> See [`docs/codex-sticky.md`](docs/codex-sticky.md) for behavior details.
+# Codex Sticky
 
-<p align="center"><strong>Codex CLI</strong> is a coding agent from OpenAI that runs locally on your computer.
-<p align="center">
-  <img src="https://github.com/openai/codex/blob/main/.github/codex-cli-splash.png" alt="Codex CLI splash" width="80%" />
-</p>
-</br>
-If you want Codex in your code editor (VS Code, Cursor, Windsurf), <a href="https://developers.openai.com/codex/ide">install in your IDE.</a>
-</br>If you want the desktop app experience, run <code>codex app</code> or visit <a href="https://chatgpt.com/codex?app-landing-page=true">the Codex App page</a>.
-</br>If you are looking for the <em>cloud-based agent</em> from OpenAI, <strong>Codex Web</strong>, go to <a href="https://chatgpt.com/codex">chatgpt.com/codex</a>.</p>
+[简体中文](./README.zh-CN.md) | English
 
----
+A lightweight terminal-first enhancement for OpenAI Codex CLI.
 
-## Quickstart
+Codex Sticky keeps the Codex experience close to upstream while making long terminal sessions easier to drive: scroll back through older transcript content without losing access to the composer, stay productive over SSH and tmux, and install it side by side with the official `codex` command.
 
-### Installing Codex Sticky
+Codex Sticky is an unofficial lightweight enhanced build of OpenAI Codex CLI. It is not affiliated with, maintained by, sponsored by, or endorsed by OpenAI. It is not a full replacement for official Codex CLI; it adds small interaction improvements on top of an upstream Codex CLI baseline for terminal-heavy workflows.
 
-Sticky releases are built locally by a maintainer and uploaded manually to
-GitHub Releases. Install the latest `codex-sticky` Linux x86_64 GNU package
-with:
+## Core Features
 
-```shell
+- Keeps the composer/input area reachable while browsing older transcript content.
+- Improves long-conversation usability in pure terminal sessions.
+- Fits SSH, tmux, remote server, and terminal-first development workflows.
+- Installs as `codex-sticky` without overwriting the official `codex` binary.
+- Tracks upstream with a thin patchset to keep maintenance cost low.
+
+## Demo
+
+<!-- TODO: Add terminal demo GIF at docs/assets/readme/codex-sticky-demo.gif -->
+<!-- TODO: Add Sticky Transcript before/after comparison at docs/assets/readme/sticky-transcript-before-after.png -->
+<!-- TODO: Add tmux / SSH demo video thumbnail at docs/assets/readme/tmux-ssh-demo-thumbnail.png -->
+
+Media placeholders live under `docs/assets/readme/`. No missing images are referenced yet.
+
+## Who It Is For
+
+Codex Sticky is most useful if you:
+
+- spend most of your development time in a terminal;
+- use Codex over SSH, inside tmux, or on a remote Linux server;
+- often work with long agent conversations and need to read earlier output;
+- want a small side-by-side enhancement instead of replacing your official Codex CLI install.
+
+## Current Support And Limits
+
+Current formal release: `0.137.0-sticky.1`.
+
+- `0.137.0` means the release is based on OpenAI Codex `0.137.0` / upstream tag `rust-v0.137.0`.
+- `-sticky.1` means the first Sticky enhancement revision on top of that upstream version.
+
+Supported today:
+
+- Linux x86_64
+- `x86_64-unknown-linux-gnu`
+- terminal, SSH, tmux, and remote-server use cases
+
+Not provided today:
+
+- macOS prebuilt package
+- Windows prebuilt package
+- Linux ARM64 prebuilt package
+- musl static package
+- automatic updater
+
+The GNU package expects a normal Linux glibc environment. Codex Sticky may lag behind the latest OpenAI Codex release; this project syncs selected stable upstream versions in stages instead of tracking every upstream commit.
+
+## Quick Start
+
+### 0. Install Official Codex CLI First
+
+Recommended flow:
+
+1. Install and verify the official OpenAI Codex CLI.
+2. Install Codex Sticky after official `codex` works.
+3. Keep official `codex` and `codex-sticky` installed side by side.
+4. Run `codex` or `codex-sticky` depending on the session.
+
+This README intentionally does not duplicate the official installation guide. Use the official sources instead:
+
+- OpenAI Codex repository: <https://github.com/openai/codex>
+- Official Codex install/build docs: <https://github.com/openai/codex/blob/main/docs/install.md>
+- OpenAI Codex developer docs: <https://developers.openai.com/codex>
+
+### Option A: Ask Codex To Install It For You
+
+If you can already run the official Codex CLI, the easiest path is to give Codex this prompt and let it install and verify Codex Sticky for you:
+
+```text
+Please help me install codex-sticky. Requirements:
+1. Do not overwrite or uninstall my existing official codex.
+2. Download the Linux x86_64 GNU archive and SHA256SUMS from the latest formal GitHub Release of Jurio0304/codex-sticky.
+3. Verify SHA256.
+4. Extract and install it as ~/.local/bin/codex-sticky.
+5. If ~/.local/bin is not already in PATH, tell me how to configure it, but do not edit my shell config without confirmation.
+6. Run codex-sticky --version to verify the installation.
+7. Finally report whether official codex and codex-sticky can coexist.
+```
+
+### Option B: Use The Install Script
+
+Safer review-first install:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh \
+  -o install-codex-sticky.sh
+
+less install-codex-sticky.sh
+bash install-codex-sticky.sh
+```
+
+Quick install:
+
+```bash
 curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh | bash
 ```
 
-To pin this release explicitly:
+The review-first form is recommended if you prefer to inspect a shell script before running it. The installer downloads the current Linux x86_64 GNU package, verifies `SHA256SUMS`, and writes only `~/.local/bin/codex-sticky`. It does not install or overwrite a binary named `codex`.
 
-```shell
-curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh -o /tmp/codex-sticky-install.sh
-CODEX_STICKY_VERSION=0.137.0-sticky.1 bash /tmp/codex-sticky-install.sh
+To pin the current release explicitly:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh \
+  -o install-codex-sticky.sh
+CODEX_STICKY_VERSION=0.137.0-sticky.1 bash install-codex-sticky.sh
 ```
 
-Manual installation uses the uploaded flat archive layout:
+### Option C: Install The Release Package Manually
 
-```shell
+Download the release assets from:
+
+<https://github.com/Jurio0304/codex-sticky/releases/tag/0.137.0-sticky.1>
+
+You need:
+
+```text
+codex-sticky-0.137.0-sticky.1-x86_64-unknown-linux-gnu.tar.gz
+SHA256SUMS
+```
+
+Verify and install:
+
+```bash
+sha256sum -c SHA256SUMS
+
 mkdir -p ~/.local/bin
 tar -xzf codex-sticky-0.137.0-sticky.1-x86_64-unknown-linux-gnu.tar.gz
-install -m 0755 codex-sticky ~/.local/bin/codex-sticky
-~/.local/bin/codex-sticky
+install -m 755 codex-sticky ~/.local/bin/codex-sticky
+
+~/.local/bin/codex-sticky --version
 ```
 
-This intentionally does not overwrite the official `codex` command.
+If `~/.local/bin` is not on your `PATH`, add it in your shell profile:
 
-### Installing and running official Codex CLI
-
-Run the following on Mac or Linux to install official Codex CLI:
-
-```shell
-curl -fsSL https://chatgpt.com/codex/install.sh | sh
+```bash
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Run the following on Windows to install official Codex CLI:
+### Option D: Optional Alias
 
-```
-powershell -ExecutionPolicy ByPass -c "irm https://chatgpt.com/codex/install.ps1 | iex"
-```
+By default, Codex Sticky does not replace official Codex CLI. If you intentionally want `codex` to start Codex Sticky in your shell, you can add an alias yourself:
 
-Official Codex CLI can also be installed via the following package managers:
-
-```shell
-# Install using npm
-npm install -g @openai/codex
+```bash
+alias codex='codex-sticky'
 ```
 
-```shell
-# Install using Homebrew
-brew install --cask codex
+This is optional. The default install keeps official `codex` untouched.
+
+## Running And Switching
+
+Run official Codex CLI:
+
+```bash
+codex
 ```
 
-Then simply run `codex` to get started with official Codex CLI.
+Run Codex Sticky:
 
-<details>
-<summary>You can also go to the <a href="https://github.com/openai/codex/releases/latest">latest GitHub Release</a> and download the appropriate binary for your platform.</summary>
+```bash
+codex-sticky
+```
 
-Each GitHub Release contains many executables, but in practice, you likely want one of these:
+Verify both commands resolve separately:
 
-- macOS
-  - Apple Silicon/arm64: `codex-aarch64-apple-darwin.tar.gz`
-  - x86_64 (older Mac hardware): `codex-x86_64-apple-darwin.tar.gz`
-- Linux
-  - x86_64: `codex-x86_64-unknown-linux-musl.tar.gz`
-  - arm64: `codex-aarch64-unknown-linux-musl.tar.gz`
+```bash
+which codex
+which codex-sticky
+codex --version
+codex-sticky --version
+```
 
-Each archive contains a single entry with the platform baked into the name (e.g., `codex-x86_64-unknown-linux-musl`), so you likely want to rename it to `codex` after extracting it.
+Temporarily switch by choosing the command for the current session. If you added an alias and want to bypass it once, use `command codex` or remove the alias in that shell.
 
-</details>
+Inside the TUI, Sticky Transcript can also be toggled for the current session:
 
-### Using Codex with your ChatGPT plan
+```text
+/sticky
+/sticky on
+/sticky off
+/sticky status
+```
 
-Run `codex` and select **Sign in with ChatGPT**. We recommend signing into your ChatGPT account to use Codex as part of your Plus, Pro, Business, Edu, or Enterprise plan. [Learn more about what's included in your ChatGPT plan](https://help.openai.com/en/articles/11369540-codex-in-chatgpt).
+## Updating
 
-You can also use Codex with an API key, but this requires [additional setup](https://developers.openai.com/codex/auth#sign-in-with-an-api-key).
+Use the installer again when a later Sticky release is published:
 
-## Docs
+```bash
+curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh | bash
+```
 
-- [**Codex Documentation**](https://developers.openai.com/codex)
-- [**Sticky Transcript user notes**](./docs/codex-sticky.md)
-- [**Sticky patchset**](./docs/codex-sticky/PATCHSET.md)
-- [**Sticky releasing**](./docs/codex-sticky/RELEASING.md)
-- [**Contributing**](./docs/contributing.md)
-- [**Installing & building**](./docs/install.md)
-- [**Open source fund**](./docs/open-source-fund.md)
+To install a specific Sticky version:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh \
+  -o install-codex-sticky.sh
+CODEX_STICKY_VERSION=0.137.0-sticky.1 bash install-codex-sticky.sh
+```
+
+There is no automatic updater today. Check GitHub Releases for new versions:
+
+<https://github.com/Jurio0304/codex-sticky/releases>
+
+## Uninstalling
+
+Remove the side-by-side binary:
+
+```bash
+rm ~/.local/bin/codex-sticky
+```
+
+If you added an alias, remove that alias from your shell profile too. The official `codex` binary is not removed by this command.
+
+## Version Rule
+
+Sticky release names use:
+
+```text
+<upstream-codex-version>-sticky.<revision>
+```
+
+For `0.137.0-sticky.1`:
+
+- `0.137.0` is the OpenAI Codex baseline.
+- `sticky.1` is the first Sticky patchset for that baseline.
+
+New Sticky release tags do not use a `v` prefix.
+
+## Upstream Sync Policy
+
+Codex Sticky aims to stay close to `openai/codex` while preserving a small terminal-workflow patchset. It does not chase every upstream commit. Instead, maintainers periodically choose stable upstream releases, review the delta, and publish a Sticky revision when the patchset is ready.
+
+This keeps the fork lightweight, but it also means Codex Sticky can be behind the latest OpenAI Codex version.
+
+## FAQ
+
+### Will it overwrite official `codex`?
+
+No. The installer writes `~/.local/bin/codex-sticky` and does not install or overwrite a binary named `codex`.
+
+### Why install official Codex CLI first?
+
+Codex Sticky is a small enhancement, not a full replacement. Installing official Codex first confirms that your account, authentication, model access, and base CLI workflow already work before you add this side-by-side binary.
+
+### Why only Linux x86_64 GNU right now?
+
+The first formal release focuses on the environment this fork is meant to serve best: terminal, SSH, tmux, and remote Linux server workflows. macOS, Windows, ARM64, musl, and broader release automation are deferred until they can be supported without expanding maintenance cost too much.
+
+### Why does `codex-sticky --version` still show `codex-cli 0.137.0`?
+
+The binary is based on the upstream Codex CLI version, so the CLI version output may still show the upstream package identity. The Sticky version is tracked by the GitHub Release tag and asset name, for example `0.137.0-sticky.1`.
+
+### Will Codex Sticky sync OpenAI Codex updates?
+
+Yes, but in stages. The project follows selected stable upstream versions rather than every commit, so it may temporarily lag behind the latest OpenAI Codex release.
+
+## Disclaimer
+
+Codex Sticky is an unofficial community fork of OpenAI Codex CLI. It is not an OpenAI product and is not maintained, sponsored, endorsed, or supported by OpenAI. Use the official OpenAI Codex CLI and documentation for the authoritative upstream project.
+
+## License
 
 This repository is licensed under the [Apache-2.0 License](LICENSE).
