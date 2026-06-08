@@ -140,10 +140,11 @@ print_artifact_guidance() {
   cat <<GUIDANCE
 
 Artifact naming guidance only; no build, upload, or release was performed:
-  - binary inside archive: codex-sticky
+  - command inside archive: codex-sticky
+  - binary payload path:   libexec/codex-sticky-bin
   - Linux archive:          codex-sticky-${tag}-x86_64-unknown-linux-gnu.tar.gz
   - checksum file:          SHA256SUMS
-  - archive contents:       codex-sticky, LICENSE, NOTICE
+  - archive contents:       codex-sticky, libexec/codex-sticky-bin, LICENSE, NOTICE
 GUIDANCE
 }
 

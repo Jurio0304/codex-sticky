@@ -19,8 +19,9 @@ Environment:
   CODEX_STICKY_REPO     GitHub repo to read releases from; defaults to Jurio0304/codex-sticky.
 
 The installer downloads codex-sticky-<version>-x86_64-unknown-linux-gnu.tar.gz
-and SHA256SUMS from GitHub Releases, verifies the checksum, and installs only:
+and SHA256SUMS from GitHub Releases, verifies the checksum, and installs:
   ~/.local/bin/codex-sticky
+  ~/.local/libexec/codex-sticky-bin
 
 It does not install or overwrite a binary named "codex".
 USAGE
@@ -159,10 +160,31 @@ latest_version_from_github() {
     return 1
 }
 
+write_codex_sticky_wrapper() {
+    local target="$1"
+    local binary="$2"
+    local version="$3"
+    local quoted_binary
+
+    printf -v quoted_binary '%q' "$binary"
+    cat > "$target" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ \${1:-} == "--version" || \${1:-} == "-V" ]] && [[ \$# -eq 1 ]]; then
+    echo "codex-sticky ${version}"
+    exit 0
+fi
+
+exec -a codex-sticky ${quoted_binary} "\$@"
+EOF
+    chmod 0755 "$target"
+}
+
 install_codex_sticky() {
     : "${HOME:?HOME is not set}"
 
-    local tmpdir archive asset checksums selected_checksums extract_dir binary install_dir target
+    local tmpdir archive asset checksums selected_checksums extract_dir archive_binary install_dir libexec_dir libexec_binary target
     INSTALL_TMPDIR="$(mktemp -d)"
     tmpdir="$INSTALL_TMPDIR"
     trap cleanup EXIT
@@ -180,6 +202,8 @@ install_codex_sticky() {
     selected_checksums="$tmpdir/SHA256SUMS.selected"
     extract_dir="$tmpdir/extract"
     install_dir="$HOME/.local/bin"
+    libexec_dir="$HOME/.local/libexec"
+    libexec_binary="$libexec_dir/codex-sticky-bin"
     target="$install_dir/codex-sticky"
 
     echo "Installing codex-sticky ${VERSION} from ${REPO}"
@@ -196,13 +220,19 @@ install_codex_sticky() {
     mkdir -p "$extract_dir"
     tar -xzf "$archive" -C "$extract_dir"
 
-    binary="$extract_dir/codex-sticky"
-    [[ -f "$binary" ]] || die "release archive did not contain a top-level codex-sticky binary"
+    if [[ -f "$extract_dir/libexec/codex-sticky-bin" ]]; then
+        archive_binary="$extract_dir/libexec/codex-sticky-bin"
+    else
+        archive_binary="$extract_dir/codex-sticky"
+    fi
+    [[ -f "$archive_binary" ]] || die "release archive did not contain codex-sticky binary payload"
 
-    install -d -m 0755 "$install_dir"
-    install -m 0755 "$binary" "$target"
+    install -d -m 0755 "$install_dir" "$libexec_dir"
+    install -m 0755 "$archive_binary" "$libexec_binary"
+    write_codex_sticky_wrapper "$target" "$libexec_binary" "$VERSION"
 
     echo "Installed: $target"
+    echo "Installed binary: $libexec_binary"
     echo "The official 'codex' binary was not modified."
 
     if [[ ":${PATH}:" != *":${install_dir}:"* ]]; then
@@ -211,7 +241,7 @@ install_codex_sticky() {
     fi
 
     echo "Uninstall with:"
-    echo "  rm -f \"$target\""
+    echo "  rm -f \"$target\" \"$libexec_binary\""
 }
 
 case "${1:-}" in

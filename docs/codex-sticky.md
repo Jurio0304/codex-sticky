@@ -111,10 +111,11 @@ CODEX_STICKY_VERSION=0.137.0-sticky.1 bash /tmp/codex-sticky-install.sh
 ```
 
 The installer downloads `codex-sticky-<version>-x86_64-unknown-linux-gnu.tar.gz`
-and `SHA256SUMS`, verifies the checksum, and writes only:
+and `SHA256SUMS`, verifies the checksum, and writes:
 
 ```text
 ~/.local/bin/codex-sticky
+~/.local/libexec/codex-sticky-bin
 ```
 
 ## Side By Side With Official Codex

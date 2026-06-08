@@ -118,7 +118,7 @@ Quick install:
 curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh | bash
 ```
 
-The review-first form is recommended if you prefer to inspect a shell script before running it. The installer downloads the current Linux x86_64 GNU package, verifies `SHA256SUMS`, and writes only `~/.local/bin/codex-sticky`. It does not install or overwrite a binary named `codex`.
+The review-first form is recommended if you prefer to inspect a shell script before running it. The installer downloads the current Linux x86_64 GNU package, verifies `SHA256SUMS`, and writes `~/.local/bin/codex-sticky` plus `~/.local/libexec/codex-sticky-bin`. It does not install or overwrite a binary named `codex`.
 
 To pin the current release explicitly:
 
@@ -146,9 +146,11 @@ Verify and install:
 ```bash
 sha256sum -c SHA256SUMS
 
-mkdir -p ~/.local/bin
+mkdir -p ~/.local/bin ~/.local/libexec
 tar -xzf codex-sticky-0.137.0-sticky.2-x86_64-unknown-linux-gnu.tar.gz
 install -m 755 codex-sticky ~/.local/bin/codex-sticky
+install -m 755 libexec/codex-sticky-bin ~/.local/libexec/codex-sticky-bin
+chmod 755 ~/.local/bin/codex-sticky
 
 ~/.local/bin/codex-sticky --version
 ```
@@ -237,7 +239,7 @@ This keeps the fork lightweight, but it also means Codex Sticky can be behind th
 
 ### 1. Will it overwrite official `codex`?
 
-No. The installer writes `~/.local/bin/codex-sticky` and does not install or overwrite a binary named `codex`.
+No. The installer writes `~/.local/bin/codex-sticky` plus `~/.local/libexec/codex-sticky-bin` and does not install or overwrite a binary named `codex`.
 
 ### 2. Why install official Codex CLI first?
 
@@ -247,9 +249,9 @@ Codex Sticky is a small enhancement, not a full replacement. Installing official
 
 The first formal release focuses on the environment this fork is meant to serve best: terminal, SSH, tmux, and remote Linux server workflows. macOS, Windows, ARM64, musl, and broader release automation are deferred until they can be supported without expanding maintenance cost too much.
 
-### 4. Why does `codex-sticky --version` still show `codex-cli 0.137.0`?
+### 4. Why does `codex-sticky --version` show `codex-sticky 0.137.0-sticky.2`?
 
-The binary is based on the upstream Codex CLI version, so the CLI version output may still show the upstream package identity. The Sticky version is tracked by the GitHub Release tag and asset name, for example `0.137.0-sticky.2`.
+The installed command wraps the upstream-based binary so the command version matches the Sticky release tag. The underlying Rust workspace version still tracks the upstream Codex CLI base version, for example `0.137.0`.
 
 ### 5. Will Codex Sticky sync OpenAI Codex updates?
 
