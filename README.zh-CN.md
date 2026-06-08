@@ -12,6 +12,12 @@
 
 Codex Sticky 尽量贴近上游 Codex CLI，只补上长终端会话里最影响体验的一块：翻看较早 transcript 内容时，composer / 输入区域仍然可达。它适合 SSH、tmux、远程服务器和纯终端开发场景，并且默认与官方 `codex` 并存安装。
 
+## 📰 News
+
+2026-06-08 🖱️ `0.137.0-sticky.2` 增加底部 composer 鼠标拖选复制、sticky 鼠标事件分发和尽力而为的文本指针提示。
+
+2026-06-05 📌 `0.137.0-sticky.1` 首次提供基于 Linux x86_64 GNU 的 Sticky Transcript 并存安装版本。
+
 ## ✨ 核心特性
 
 - 浏览较早 transcript 内容时，保持 composer / 输入区域可达。
@@ -41,10 +47,10 @@ Codex Sticky 尽量贴近上游 Codex CLI，只补上长终端会话里最影响
 
 ## 🧭 当前支持范围与限制
 
-当前正式版：`0.137.0-sticky.1`。
+当前正式版：`0.137.0-sticky.2`。
 
 - `0.137.0` 表示基于 OpenAI Codex `0.137.0` / 上游标签 `rust-v0.137.0`。
-- `-sticky.1` 表示这个上游版本上的第 1 个 Sticky 增强版本。
+- `-sticky.2` 表示这个上游版本上的第 2 个 Sticky 增强版本。
 
 当前支持：
 
@@ -119,19 +125,19 @@ curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh \
   -o install-codex-sticky.sh
-CODEX_STICKY_VERSION=0.137.0-sticky.1 bash install-codex-sticky.sh
+CODEX_STICKY_VERSION=0.137.0-sticky.2 bash install-codex-sticky.sh
 ```
 
 ### 方案 C：手动安装 Release 包
 
 从下面的 Release 页面下载资产：
 
-<https://github.com/Jurio0304/codex-sticky/releases/tag/0.137.0-sticky.1>
+<https://github.com/Jurio0304/codex-sticky/releases/tag/0.137.0-sticky.2>
 
 需要下载：
 
 ```text
-codex-sticky-0.137.0-sticky.1-x86_64-unknown-linux-gnu.tar.gz
+codex-sticky-0.137.0-sticky.2-x86_64-unknown-linux-gnu.tar.gz
 SHA256SUMS
 ```
 
@@ -141,7 +147,7 @@ SHA256SUMS
 sha256sum -c SHA256SUMS
 
 mkdir -p ~/.local/bin
-tar -xzf codex-sticky-0.137.0-sticky.1-x86_64-unknown-linux-gnu.tar.gz
+tar -xzf codex-sticky-0.137.0-sticky.2-x86_64-unknown-linux-gnu.tar.gz
 install -m 755 codex-sticky ~/.local/bin/codex-sticky
 
 ~/.local/bin/codex-sticky --version
@@ -243,7 +249,7 @@ Codex Sticky 是小增强，不是完整替代品。先安装并验证官方 Cod
 
 ### 4. 为什么 `codex-sticky --version` 仍显示 `codex-cli 0.137.0`？
 
-二进制基于上游 Codex CLI，因此 CLI 自身的版本输出可能仍显示上游包名和版本。Sticky 版本通过 GitHub Release tag 和资产文件名标识，例如 `0.137.0-sticky.1`。
+二进制基于上游 Codex CLI，因此 CLI 自身的版本输出可能仍显示上游包名和版本。Sticky 版本通过 GitHub Release tag 和资产文件名标识，例如 `0.137.0-sticky.2`。
 
 ### 5. 项目会同步 OpenAI Codex 更新吗？
 

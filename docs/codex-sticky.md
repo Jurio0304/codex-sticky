@@ -16,14 +16,16 @@ codex
 `codex` keeps the official Codex CLI behavior. With the default configuration,
 `tui.sticky_transcript` is `false`.
 
-The optional wrapper starts a locally built Codex binary with Sticky Transcript
-enabled for that process:
+## Sticky Mode
+
+The `codex-sticky` entry point starts Codex with Sticky Transcript enabled by
+default for that process:
 
 ```bash
 codex-sticky
 ```
 
-The wrapper passes the existing CLI override syntax:
+It uses the existing CLI override syntax:
 
 ```bash
 -c 'tui.sticky_transcript=true'
@@ -80,6 +82,7 @@ Sticky mode enables a narrow mouse-reporting setup for the transcript viewport:
 ```text
 CSI ? 1006 h
 CSI ? 1002 h
+OSC 22 ; text ST
 ```
 
 This enables SGR mouse coordinates and button, drag, and wheel events without
@@ -91,16 +94,16 @@ selected plain text through OSC 52:
 OSC 52 ; c ; <base64 payload> BEL
 ```
 
-Clipboard behavior is intentionally narrow:
+The copy path is only triggered by completing a drag selection in the Sticky
+transcript viewport or the bottom composer. It does not read the clipboard or
+run in the background. Transcript selection does not include the composer,
+unread hint, layout spacer, ANSI styling, or selection highlight; composer
+selection copies only the selected draft text.
 
-- OSC 52 clipboard writes only occur after the user completes a Sticky
-  transcript drag selection.
-- Sticky Transcript does not read the clipboard.
-- Sticky Transcript does not copy in the background.
-- Sticky Transcript does not record or log copied payloads.
-- Very large selections are capped before OSC 52 payload generation.
-- The copied text excludes the composer, unread hint, layout spacer, ANSI
-  styling, and selection highlight.
+While mouse reporting is enabled, many terminals show the pointer as a default
+arrow instead of the native text-selection I-beam. Sticky sends OSC 22 `text`
+as a best-effort pointer shape hint and resets it to `default` when mouse
+reporting is disabled, but support is terminal-specific.
 
 ## tmux And OSC 52
 

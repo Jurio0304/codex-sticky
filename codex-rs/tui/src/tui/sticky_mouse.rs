@@ -10,7 +10,8 @@ pub(crate) struct EnableStickyMouseCapture;
 impl Command for EnableStickyMouseCapture {
     fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
         // Sticky only needs SGR coordinates plus button/drag/wheel reporting.
-        f.write_str("\x1b[?1006h\x1b[?1002h")
+        // OSC 22 is a best-effort pointer shape hint; unsupported terminals ignore it.
+        f.write_str("\x1b[?1006h\x1b[?1002h\x1b]22;text\x1b\\")
     }
 
     #[cfg(windows)]
@@ -30,7 +31,7 @@ pub(crate) struct DisableStickyMouseCapture;
 impl Command for DisableStickyMouseCapture {
     fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
         // Disable button-event tracking before SGR mouse coordinates.
-        f.write_str("\x1b[?1002l\x1b[?1006l")
+        f.write_str("\x1b[?1002l\x1b[?1006l\x1b]22;default\x1b\\")
     }
 
     #[cfg(windows)]
@@ -55,16 +56,16 @@ mod tests {
     }
 
     #[test]
-    fn sticky_mouse_enable_only_requests_sgr_and_button_event_tracking() {
+    fn sticky_mouse_enable_requests_mouse_reporting_and_text_pointer_hint() {
         let sequence = ansi(EnableStickyMouseCapture);
 
-        assert_eq!(sequence, "\x1b[?1006h\x1b[?1002h");
+        assert_eq!(sequence, "\x1b[?1006h\x1b[?1002h\x1b]22;text\x1b\\");
     }
 
     #[test]
-    fn sticky_mouse_disable_reverses_only_enabled_modes_in_safe_order() {
+    fn sticky_mouse_disable_reverses_mouse_reporting_and_pointer_hint() {
         let sequence = ansi(DisableStickyMouseCapture);
 
-        assert_eq!(sequence, "\x1b[?1002l\x1b[?1006l");
+        assert_eq!(sequence, "\x1b[?1002l\x1b[?1006l\x1b]22;default\x1b\\");
     }
 }
