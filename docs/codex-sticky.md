@@ -143,16 +143,11 @@ bash scripts/install-codex-sticky.sh
 codex-sticky
 ```
 
-The install script copies the locally built binary to:
-
-```text
-~/.local/libexec/codex-sticky-bin
-```
-
-and writes the wrapper to:
+The install script writes:
 
 ```text
 ~/.local/bin/codex-sticky
+~/.local/libexec/codex-sticky-bin
 ```
 
 Confirm that `codex` and `codex-sticky` resolve to different entries before

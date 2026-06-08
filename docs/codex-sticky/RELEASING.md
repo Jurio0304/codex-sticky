@@ -48,10 +48,11 @@ codex-sticky-0.137.0-sticky.1-x86_64-unknown-linux-gnu.tar.gz
 SHA256SUMS
 ```
 
-The archive is flat and contains:
+The archive contains:
 
 ```text
 codex-sticky
+libexec/codex-sticky-bin
 LICENSE
 NOTICE
 ```
@@ -64,10 +65,12 @@ NOTICE
 Do not replace official `codex`. Install this fork side by side:
 
 ```bash
-mkdir -p ~/.local/bin
+mkdir -p ~/.local/bin ~/.local/libexec
 tar -xzf codex-sticky-0.137.0-sticky.1-x86_64-unknown-linux-gnu.tar.gz
 install -m 0755 codex-sticky ~/.local/bin/codex-sticky
-~/.local/bin/codex-sticky
+install -m 0755 libexec/codex-sticky-bin ~/.local/libexec/codex-sticky-bin
+chmod 0755 ~/.local/bin/codex-sticky
+~/.local/bin/codex-sticky --version
 ```
 
 Or use the installer:

@@ -3,6 +3,7 @@ set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "$script_dir/.." && pwd)"
+sticky_version="${CODEX_STICKY_VERSION:-0.137.0-sticky.2}"
 
 cd "$repo_root/codex-rs"
 cargo build --release --bin codex
@@ -15,10 +16,14 @@ cat >"$HOME/.local/bin/codex-sticky" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
-exec "$HOME/.local/libexec/codex-sticky-bin" \
-  -c 'tui.sticky_transcript=true' \
-  "$@"
+if [[ ${1:-} == "--version" || ${1:-} == "-V" ]] && [[ $# -eq 1 ]]; then
+  echo "codex-sticky __CODEX_STICKY_VERSION__"
+  exit 0
+fi
+
+exec -a codex-sticky "$HOME/.local/libexec/codex-sticky-bin" "$@"
 EOF
+sed -i "s/__CODEX_STICKY_VERSION__/$sticky_version/g" "$HOME/.local/bin/codex-sticky"
 chmod 0755 "$HOME/.local/bin/codex-sticky"
 
 echo "codex:"
