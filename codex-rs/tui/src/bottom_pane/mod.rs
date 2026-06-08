@@ -44,6 +44,7 @@ use codex_protocol::user_input::TextElement;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
+use crossterm::event::MouseEvent;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::text::Line;
@@ -179,9 +180,17 @@ pub(crate) enum CancellationEvent {
     NotHandled,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum BottomPaneMouseAction {
+    Ignored,
+    Redraw,
+    CopySelection(String),
+}
+
 use crate::bottom_pane::prompt_args::parse_slash_name;
 pub(crate) use chat_composer::ChatComposer;
 pub(crate) use chat_composer::ChatComposerConfig;
+use chat_composer::ComposerMouseAction;
 pub(crate) use chat_composer::InputResult;
 pub(crate) use chat_composer::QueuedInputAction;
 pub(crate) use chat_composer_history::HistoryEntry;
@@ -670,6 +679,24 @@ impl BottomPane {
                 self.request_redraw_in(ChatComposer::recommended_paste_flush_delay());
             }
             input_result
+        }
+    }
+
+    pub(crate) fn handle_mouse_event(&mut self, mouse_event: MouseEvent) -> BottomPaneMouseAction {
+        if !self.view_stack.is_empty() {
+            return BottomPaneMouseAction::Ignored;
+        }
+
+        match self.composer.handle_mouse_event(mouse_event) {
+            ComposerMouseAction::Ignored => BottomPaneMouseAction::Ignored,
+            ComposerMouseAction::Redraw => {
+                self.request_redraw();
+                BottomPaneMouseAction::Redraw
+            }
+            ComposerMouseAction::CopySelection(text) => {
+                self.request_redraw();
+                BottomPaneMouseAction::CopySelection(text)
+            }
         }
     }
 

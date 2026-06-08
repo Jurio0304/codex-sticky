@@ -140,6 +140,9 @@ use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
+use crossterm::event::MouseButton;
+use crossterm::event::MouseEvent;
+use crossterm::event::MouseEventKind;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint;
 use ratatui::layout::Layout;
@@ -248,6 +251,8 @@ use codex_file_search::FileMatch;
 #[cfg(test)]
 use codex_plugin::AppConnectorId;
 use codex_plugin::PluginCapabilitySummary;
+use std::cell::Cell;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -294,6 +299,13 @@ pub enum InputResult {
     /// committed only if dispatch accepts it.
     CommandWithArgs(SlashCommand, String, Vec<TextElement>),
     None,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum ComposerMouseAction {
+    Ignored,
+    Redraw,
+    CopySelection(String),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -385,6 +397,30 @@ pub(crate) struct ChatComposer {
     history_search_next_keys: Vec<KeyBinding>,
     editor_keymap: EditorKeymap,
     vim_normal_keymap: VimNormalKeymap,
+    last_textarea_rect: Cell<Rect>,
+    mouse_selection: RefCell<Option<ComposerMouseSelection>>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct ComposerMouseSelection {
+    anchor: usize,
+    cursor: usize,
+}
+
+impl ComposerMouseSelection {
+    fn new(anchor: usize) -> Self {
+        Self {
+            anchor,
+            cursor: anchor,
+        }
+    }
+
+    fn range(self) -> Option<Range<usize>> {
+        if self.anchor == self.cursor {
+            return None;
+        }
+        Some(self.anchor.min(self.cursor)..self.anchor.max(self.cursor))
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -556,6 +592,8 @@ impl ChatComposer {
             history_search_next_keys: default_keymap.composer.history_search_next.clone(),
             editor_keymap: default_editor_keymap,
             vim_normal_keymap: default_vim_normal_keymap,
+            last_textarea_rect: Cell::new(Rect::ZERO),
+            mouse_selection: RefCell::new(None),
         };
         // Apply configuration via the setter to keep side-effects centralized.
         this.set_disable_paste_burst(disable_paste_burst);
@@ -1623,6 +1661,7 @@ impl ChatComposer {
     }
 
     pub(crate) fn insert_str(&mut self, text: &str) {
+        self.clear_mouse_selection();
         self.draft.textarea.insert_str(text);
         self.sync_bash_mode_from_text();
         self.sync_popups();
@@ -1630,33 +1669,120 @@ impl ChatComposer {
 
     /// Handle a key event coming from the main UI.
     pub fn handle_key_event(&mut self, key_event: KeyEvent) -> (InputResult, bool) {
-        if !self.draft.input_enabled {
-            return (InputResult::None, false);
+        let selection_cleared = self.clear_mouse_selection();
+        let mut result =
+            if !self.draft.input_enabled || matches!(key_event.kind, KeyEventKind::Release) {
+                (InputResult::None, false)
+            } else if self.history_search.is_some() {
+                self.handle_history_search_key(key_event)
+            } else if Self::is_history_search_key(&key_event, &self.history_search_previous_keys) {
+                self.begin_history_search()
+            } else {
+                let result = match &mut self.popups.active {
+                    ActivePopup::Command(_) => self.handle_key_event_with_slash_popup(key_event),
+                    ActivePopup::File(_) => self.handle_key_event_with_file_popup(key_event),
+                    ActivePopup::Skill(_) => self.handle_key_event_with_skill_popup(key_event),
+                    ActivePopup::MentionV2(_) => {
+                        self.handle_key_event_with_mentions_v2_popup(key_event)
+                    }
+                    ActivePopup::None => self.handle_key_event_without_popup(key_event),
+                };
+                self.reset_vim_mode_after_successful_dispatch(&result.0);
+                // Update (or hide/show) popup after processing the key.
+                self.sync_popups();
+                result
+            };
+        if selection_cleared {
+            result.1 = true;
         }
-
-        if matches!(key_event.kind, KeyEventKind::Release) {
-            return (InputResult::None, false);
-        }
-
-        if self.history_search.is_some() {
-            return self.handle_history_search_key(key_event);
-        }
-
-        if Self::is_history_search_key(&key_event, &self.history_search_previous_keys) {
-            return self.begin_history_search();
-        }
-
-        let result = match &mut self.popups.active {
-            ActivePopup::Command(_) => self.handle_key_event_with_slash_popup(key_event),
-            ActivePopup::File(_) => self.handle_key_event_with_file_popup(key_event),
-            ActivePopup::Skill(_) => self.handle_key_event_with_skill_popup(key_event),
-            ActivePopup::MentionV2(_) => self.handle_key_event_with_mentions_v2_popup(key_event),
-            ActivePopup::None => self.handle_key_event_without_popup(key_event),
-        };
-        self.reset_vim_mode_after_successful_dispatch(&result.0);
-        // Update (or hide/show) popup after processing the key.
-        self.sync_popups();
         result
+    }
+
+    pub(crate) fn handle_mouse_event(&self, mouse_event: MouseEvent) -> ComposerMouseAction {
+        if !self.draft.input_enabled
+            || self.popup_active()
+            || self.attachments.selected_remote_image_index.is_some()
+        {
+            return ComposerMouseAction::Ignored;
+        }
+
+        match mouse_event.kind {
+            MouseEventKind::Down(MouseButton::Left) => {
+                let Some(anchor) = self.mouse_byte_offset(mouse_event) else {
+                    return if self.clear_mouse_selection() {
+                        ComposerMouseAction::Redraw
+                    } else {
+                        ComposerMouseAction::Ignored
+                    };
+                };
+                self.mouse_selection
+                    .replace(Some(ComposerMouseSelection::new(anchor)));
+                ComposerMouseAction::Redraw
+            }
+            MouseEventKind::Drag(MouseButton::Left) => {
+                let Some(cursor) = self.mouse_byte_offset_clamped(mouse_event) else {
+                    return ComposerMouseAction::Ignored;
+                };
+                let mut selection = self.mouse_selection.borrow_mut();
+                if let Some(selection) = selection.as_mut() {
+                    selection.cursor = cursor;
+                    ComposerMouseAction::Redraw
+                } else {
+                    ComposerMouseAction::Ignored
+                }
+            }
+            MouseEventKind::Up(MouseButton::Left) => {
+                let Some(mut selection) = self.mouse_selection.take() else {
+                    return ComposerMouseAction::Ignored;
+                };
+                if let Some(cursor) = self.mouse_byte_offset_clamped(mouse_event) {
+                    selection.cursor = cursor;
+                }
+                if let Some(range) = selection.range() {
+                    let selected_text = self
+                        .draft
+                        .textarea
+                        .selected_text_for_byte_range(range.start, range.end);
+                    if selected_text.is_empty() {
+                        ComposerMouseAction::Redraw
+                    } else {
+                        ComposerMouseAction::CopySelection(selected_text)
+                    }
+                } else {
+                    ComposerMouseAction::Redraw
+                }
+            }
+            _ => ComposerMouseAction::Ignored,
+        }
+    }
+
+    fn mouse_byte_offset(&self, mouse_event: MouseEvent) -> Option<usize> {
+        let area = self.last_textarea_rect.get();
+        let state = *self.draft.textarea_state.borrow();
+        self.draft
+            .textarea
+            .byte_offset_for_mouse(area, state, mouse_event.column, mouse_event.row)
+    }
+
+    fn mouse_byte_offset_clamped(&self, mouse_event: MouseEvent) -> Option<usize> {
+        let area = self.last_textarea_rect.get();
+        if area.is_empty() {
+            return None;
+        }
+        let column = mouse_event
+            .column
+            .clamp(area.x, area.right().saturating_sub(1));
+        let row = mouse_event
+            .row
+            .clamp(area.y, area.bottom().saturating_sub(1));
+        let state = *self.draft.textarea_state.borrow();
+        self.draft
+            .textarea
+            .byte_offset_for_mouse(area, state, column, row)
+    }
+
+    fn clear_mouse_selection(&self) -> bool {
+        self.mouse_selection.take().is_some()
     }
 
     /// Return true if any popup or history search is active.
@@ -4142,6 +4268,7 @@ impl ChatComposer {
     ) {
         let [composer_rect, remote_images_rect, textarea_rect, popup_rect] =
             self.layout_areas_with_textarea_right_reserve(area, textarea_right_reserve);
+        self.last_textarea_rect.set(textarea_rect);
         match &self.popups.active {
             ActivePopup::Command(popup) => {
                 popup.render_ref(popup_rect, buf);
@@ -4425,6 +4552,14 @@ impl ChatComposer {
                         .into_iter()
                         .map(|range| (range, search_highlight_style)),
                 );
+                if let Some(range) = self
+                    .mouse_selection
+                    .borrow()
+                    .as_ref()
+                    .and_then(|selection| selection.range())
+                {
+                    highlights.push((range, Style::default().add_modifier(Modifier::REVERSED)));
+                }
                 if highlights.is_empty() {
                     StatefulWidgetRef::render_ref(
                         &(&self.draft.textarea),
@@ -4573,6 +4708,149 @@ mod tests {
         assert!(
             !bottom_row.contains("K label"),
             "expected flash to override hint override, saw: {bottom_row:?}",
+        );
+    }
+
+    fn mouse_event(kind: MouseEventKind, column: u16, row: u16) -> MouseEvent {
+        MouseEvent {
+            kind,
+            column,
+            row,
+            modifiers: KeyModifiers::NONE,
+        }
+    }
+
+    fn composer_with_text_and_rect(text: &str) -> (ChatComposer, Rect, Rect) {
+        let (tx, _rx) = unbounded_channel::<AppEvent>();
+        let sender = AppEventSender::new(tx);
+        let mut composer = ChatComposer::new(
+            /*has_input_focus*/ true,
+            sender,
+            /*enhanced_keys_supported*/ false,
+            "Ask Codex to do anything".to_string(),
+            /*disable_paste_burst*/ false,
+        );
+        composer.insert_str(text);
+
+        let area = Rect::new(0, 0, 40, 6);
+        let mut buf = Buffer::empty(area);
+        composer.render(area, &mut buf);
+        let textarea_rect = composer.last_textarea_rect.get();
+        (composer, area, textarea_rect)
+    }
+
+    #[test]
+    fn mouse_drag_selection_copies_textarea_text() {
+        let (composer, area, textarea_rect) = composer_with_text_and_rect("hello world");
+
+        assert_eq!(
+            composer.handle_mouse_event(mouse_event(
+                MouseEventKind::Down(MouseButton::Left),
+                textarea_rect.x,
+                textarea_rect.y,
+            )),
+            ComposerMouseAction::Redraw
+        );
+        assert_eq!(
+            composer.handle_mouse_event(mouse_event(
+                MouseEventKind::Drag(MouseButton::Left),
+                textarea_rect.x + 5,
+                textarea_rect.y,
+            )),
+            ComposerMouseAction::Redraw
+        );
+
+        let mut selection_buf = Buffer::empty(area);
+        composer.render(area, &mut selection_buf);
+        let mut text = String::new();
+        let mut reversed = String::new();
+        for x in 0..area.width {
+            let cell = &selection_buf[(x, textarea_rect.y)];
+            text.push(cell.symbol().chars().next().unwrap_or(' '));
+            reversed.push(if cell.style().add_modifier.contains(Modifier::REVERSED) {
+                '^'
+            } else {
+                ' '
+            });
+        }
+        while text.ends_with(' ') {
+            text.pop();
+        }
+        while reversed.ends_with(' ') {
+            reversed.pop();
+        }
+        insta::assert_snapshot!(
+            "mouse_drag_selection_highlights_textarea_text",
+            format!("text:     {text}\nreversed: {reversed}")
+        );
+
+        assert_eq!(
+            composer.handle_mouse_event(mouse_event(
+                MouseEventKind::Up(MouseButton::Left),
+                textarea_rect.x + 5,
+                textarea_rect.y,
+            )),
+            ComposerMouseAction::CopySelection("hello".to_string())
+        );
+    }
+
+    #[test]
+    fn mouse_drag_selection_copies_reversed_textarea_text() {
+        let (composer, _area, textarea_rect) = composer_with_text_and_rect("hello world");
+
+        assert_eq!(
+            composer.handle_mouse_event(mouse_event(
+                MouseEventKind::Down(MouseButton::Left),
+                textarea_rect.x + 5,
+                textarea_rect.y,
+            )),
+            ComposerMouseAction::Redraw
+        );
+        assert_eq!(
+            composer.handle_mouse_event(mouse_event(
+                MouseEventKind::Drag(MouseButton::Left),
+                textarea_rect.x,
+                textarea_rect.y,
+            )),
+            ComposerMouseAction::Redraw
+        );
+        assert_eq!(
+            composer.handle_mouse_event(mouse_event(
+                MouseEventKind::Up(MouseButton::Left),
+                textarea_rect.x,
+                textarea_rect.y,
+            )),
+            ComposerMouseAction::CopySelection("hello".to_string())
+        );
+    }
+
+    #[test]
+    fn mouse_drag_selection_clamps_outside_textarea() {
+        let (composer, _area, textarea_rect) = composer_with_text_and_rect("hello world");
+
+        assert_eq!(
+            composer.handle_mouse_event(mouse_event(
+                MouseEventKind::Down(MouseButton::Left),
+                textarea_rect.x,
+                textarea_rect.y,
+            )),
+            ComposerMouseAction::Redraw
+        );
+        assert_eq!(
+            composer.handle_mouse_event(mouse_event(
+                MouseEventKind::Drag(MouseButton::Left),
+                textarea_rect.right().saturating_add(10),
+                textarea_rect.y,
+            )),
+            ComposerMouseAction::Redraw
+        );
+        assert_eq!(
+            composer.handle_mouse_event(mouse_event(
+                MouseEventKind::Up(MouseButton::Left),
+                textarea_rect.right().saturating_add(10),
+                textarea_rect.y,
+            )),
+            ComposerMouseAction::CopySelection("hello world".to_string())
         );
     }
 

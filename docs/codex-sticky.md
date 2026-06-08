@@ -14,7 +14,7 @@ With the default configuration, `tui.sticky_transcript` is `false`, so Codex kee
 
 ## Sticky Mode
 
-The `codex-sticky` binary starts Codex with Sticky Transcript enabled by
+The `codex-sticky` entry point starts Codex with Sticky Transcript enabled by
 default for that process:
 
 ```bash
@@ -47,6 +47,7 @@ Sticky mode uses a narrow mouse-reporting setup for the transcript viewport:
 ```text
 CSI ? 1006 h
 CSI ? 1002 h
+OSC 22 ; text ST
 ```
 
 This enables SGR mouse coordinates and button/drag/wheel events without enabling all-motion reporting. The mouse wheel scrolls the transcript. A left-button drag highlights transcript text; releasing the button copies the selected plain text through OSC 52:
@@ -55,7 +56,16 @@ This enables SGR mouse coordinates and button/drag/wheel events without enabling
 OSC 52 ; c ; <base64 payload> BEL
 ```
 
-The copy path is only triggered by completing a Sticky transcript drag selection. It does not read the clipboard, does not run in the background, and does not include the composer, unread hint, layout spacer, ANSI styling, or selection highlight.
+The copy path is only triggered by completing a drag selection in the Sticky
+transcript viewport or the bottom composer. It does not read the clipboard or
+run in the background. Transcript selection does not include the composer,
+unread hint, layout spacer, ANSI styling, or selection highlight; composer
+selection copies only the selected draft text.
+
+While mouse reporting is enabled, many terminals show the pointer as a default
+arrow instead of the native text-selection I-beam. Sticky sends OSC 22 `text`
+as a best-effort pointer shape hint and resets it to `default` when mouse
+reporting is disabled, but support is terminal-specific.
 
 Termius Desktop must allow OSC 52 clipboard writes for local Windows clipboard integration. If copying works without tmux but not inside tmux, check the tmux server:
 

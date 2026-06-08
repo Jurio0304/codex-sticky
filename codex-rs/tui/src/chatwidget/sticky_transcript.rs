@@ -23,6 +23,8 @@ use ratatui::widgets::Widget;
 use unicode_width::UnicodeWidthChar;
 use unicode_width::UnicodeWidthStr;
 
+use crate::bottom_pane::BottomPaneMouseAction;
+
 use super::sticky_clipboard::ClipboardWrite;
 use super::sticky_clipboard::copy_text_to_clipboard;
 use super::*;
@@ -410,6 +412,17 @@ impl ChatWidget {
             StickyMouseAction::Ignored => false,
             StickyMouseAction::Redraw => true,
             StickyMouseAction::CopySelection(text) => {
+                self.finish_sticky_transcript_copy(text);
+                true
+            }
+        }
+    }
+
+    pub(crate) fn handle_sticky_composer_mouse_event(&mut self, mouse_event: MouseEvent) -> bool {
+        match self.bottom_pane.handle_mouse_event(mouse_event) {
+            BottomPaneMouseAction::Ignored => false,
+            BottomPaneMouseAction::Redraw => true,
+            BottomPaneMouseAction::CopySelection(text) => {
                 self.finish_sticky_transcript_copy(text);
                 true
             }
