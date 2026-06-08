@@ -118,9 +118,12 @@ impl App {
     ) {
         if self.overlay.is_none()
             && self.chat_widget.no_modal_or_popup_active()
-            && self
+            && (self
                 .chat_widget
                 .handle_sticky_transcript_mouse_event(mouse_event)
+                || self
+                    .chat_widget
+                    .handle_sticky_composer_mouse_event(mouse_event))
         {
             tui.frame_requester().schedule_frame();
         }

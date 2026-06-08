@@ -36,6 +36,7 @@ use textwrap::Options;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
+mod mouse_selection;
 mod vim;
 use self::vim::VimMode;
 use self::vim::VimMotion;
