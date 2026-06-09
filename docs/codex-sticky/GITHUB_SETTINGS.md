@@ -29,9 +29,9 @@ uploaded manually through the GitHub Release draft UI.
 
 Preserve historical tags, especially `v0.1.0`. New release tags use
 `<upstream-version>-sticky.<revision>` and must not overwrite or delete old
-Sticky tags. Do not create a Sticky release tag for the current initial
-`upstream/main` migration; prepare `0.137.0-sticky.1` from `rust-v0.137.0` on a
-dedicated release branch, then tag only after review.
+Sticky tags. Prepare releases from official stable tags, for example
+`0.138.0-sticky.1` from `rust-v0.138.0` on a dedicated release branch, then tag
+only after review.
 
 ## Automation Boundaries
 

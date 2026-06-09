@@ -14,6 +14,8 @@ Codex Sticky 尽量贴近上游 Codex CLI，只补上长终端会话里最影响
 
 ## 📰 News
 
+2026-06-09 ⬆️ `0.138.0-sticky.1` 同步至 OpenAI Codex `0.138.0` / 上游标签 `rust-v0.138.0`，并保留 Sticky Transcript 补丁集。
+
 2026-06-08 🖱️ `0.137.0-sticky.2` 增加底部 composer 鼠标拖选复制、sticky 鼠标事件分发和尽力而为的文本指针提示。
 
 2026-06-05 📌 `0.137.0-sticky.1` 首次提供基于 Linux x86_64 GNU 的 Sticky Transcript 并存安装版本。
@@ -47,10 +49,10 @@ Codex Sticky 尽量贴近上游 Codex CLI，只补上长终端会话里最影响
 
 ## 🧭 当前支持范围与限制
 
-当前正式版：`0.137.0-sticky.2`。
+当前正式版：`0.138.0-sticky.1`。
 
-- `0.137.0` 表示基于 OpenAI Codex `0.137.0` / 上游标签 `rust-v0.137.0`。
-- `-sticky.2` 表示这个上游版本上的第 2 个 Sticky 增强版本。
+- `0.138.0` 表示基于 OpenAI Codex `0.138.0` / 上游标签 `rust-v0.138.0`。
+- `-sticky.1` 表示这个上游版本上的第 1 个 Sticky 增强版本。
 
 当前支持：
 
@@ -125,19 +127,19 @@ curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh \
   -o install-codex-sticky.sh
-CODEX_STICKY_VERSION=0.137.0-sticky.2 bash install-codex-sticky.sh
+CODEX_STICKY_VERSION=0.138.0-sticky.1 bash install-codex-sticky.sh
 ```
 
 ### 方案 C：手动安装 Release 包
 
 从下面的 Release 页面下载资产：
 
-<https://github.com/Jurio0304/codex-sticky/releases/tag/0.137.0-sticky.2>
+<https://github.com/Jurio0304/codex-sticky/releases/tag/0.138.0-sticky.1>
 
 需要下载：
 
 ```text
-codex-sticky-0.137.0-sticky.2-x86_64-unknown-linux-gnu.tar.gz
+codex-sticky-0.138.0-sticky.1-x86_64-unknown-linux-gnu.tar.gz
 SHA256SUMS
 ```
 
@@ -147,7 +149,7 @@ SHA256SUMS
 sha256sum -c SHA256SUMS
 
 mkdir -p ~/.local/bin ~/.local/libexec
-tar -xzf codex-sticky-0.137.0-sticky.2-x86_64-unknown-linux-gnu.tar.gz
+tar -xzf codex-sticky-0.138.0-sticky.1-x86_64-unknown-linux-gnu.tar.gz
 install -m 755 codex-sticky ~/.local/bin/codex-sticky
 install -m 755 libexec/codex-sticky-bin ~/.local/libexec/codex-sticky-bin
 chmod 755 ~/.local/bin/codex-sticky
@@ -249,9 +251,9 @@ Codex Sticky 是小增强，不是完整替代品。先安装并验证官方 Cod
 
 第一个正式版本优先覆盖本项目最关注的环境：终端、SSH、tmux 和远程 Linux 服务器。macOS、Windows、ARM64、musl 以及更复杂的发布自动化会等到维护成本可控时再考虑。
 
-### 4. 为什么 `codex-sticky --version` 显示 `codex-sticky 0.137.0-sticky.2`？
+### 4. 为什么 `codex-sticky --version` 显示 `codex-sticky 0.138.0-sticky.1`？
 
-安装后的命令会包装基于上游的二进制，让命令版本与 Sticky release tag 保持一致。底层 Rust workspace 版本仍跟随上游 Codex CLI 基准版本，例如 `0.137.0`。
+安装后的命令会包装基于上游的二进制，让命令版本与 Sticky release tag 保持一致。底层 Rust workspace 版本仍跟随上游 Codex CLI 基准版本，例如 `0.138.0`。
 
 ### 5. 项目会同步 OpenAI Codex 更新吗？
 

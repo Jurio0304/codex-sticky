@@ -4,24 +4,19 @@ Codex Sticky is an unofficial lightweight fork of `openai/codex`; it is not
 maintained, sponsored, or endorsed by OpenAI. The goal is a thin, low-cost
 patchset that can periodically sync with official stable Codex releases.
 
-## Baseline
+## Release Baseline
 
 - Official repository: `openai/codex`
 - Sticky fork: `Jurio0304/codex-sticky`
-- Synced ref: `upstream/main`
-- Synced commit: `55aa071b17c825bdb66fac99cde2e7a7acfbdee7`
-- `origin/main` / Sticky main: `25ac28fa5ef0052d8c82aa410606abc532a38a2c`
-- GitHub latest stable release: `rust-v0.137.0` (`0.137.0`)
+- Release branch: `release/0.138.0-sticky.1`
+- Upstream base tag: `rust-v0.138.0`
+- Upstream base commit: `c18e9f478bc940ef1ef8e1c426364c0fe3d86b73`
+- Sticky release version: `0.138.0-sticky.1`
 
-The current Sticky code comes from an initial `upstream/main` migration, not a
-standard sync from `rust-v0.137.0`. The latest stable release value is recorded
-from the GitHub Releases API for future sync planning and must not be described
-as the exact base tag of the current code.
-
-Formal Sticky release tags omit a `v` prefix. For example, `0.137.0-sticky.1`
-means OpenAI Codex `rust-v0.137.0` plus the first Sticky enhancement patchset.
-That release is prepared from a release branch based on `rust-v0.137.0`, not by
-tagging the current initial-migration `main`.
+`0.138.0-sticky.1` means OpenAI Codex `rust-v0.138.0` plus the first Sticky
+enhancement patchset for that upstream version. Formal Sticky release tags omit
+a `v` prefix. Preserve the historical `v0.1.0` tag; never delete, overwrite, or
+reuse it for the current scheme.
 
 ## Release Target
 

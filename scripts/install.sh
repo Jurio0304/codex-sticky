@@ -15,7 +15,7 @@ Usage:
   scripts/install.sh
 
 Environment:
-  CODEX_STICKY_VERSION  Install an explicit version, e.g. 0.137.0-sticky.1.
+  CODEX_STICKY_VERSION  Install an explicit version, e.g. 0.138.0-sticky.1.
   CODEX_STICKY_REPO     GitHub repo to read releases from; defaults to Jurio0304/codex-sticky.
 
 The installer downloads codex-sticky-<version>-x86_64-unknown-linux-gnu.tar.gz
@@ -55,7 +55,7 @@ validate_platform() {
 validate_version() {
     local version="$1"
     if [[ ! "$version" =~ $VERSION_RE ]]; then
-        die "invalid codex-sticky version '$version'; expected format like 0.137.0-sticky.1 with no v prefix"
+        die "invalid codex-sticky version '$version'; expected format like 0.138.0-sticky.1 with no v prefix"
     fi
 }
 

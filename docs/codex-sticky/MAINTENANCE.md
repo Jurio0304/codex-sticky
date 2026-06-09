@@ -17,11 +17,10 @@ Prefer official stable release tags instead of continuously chasing
 `upstream/main`. Use `upstream/main` to inspect history and conflicts, then merge
 the selected stable tag.
 
-The current Sticky `main` is an initial migration from `upstream/main` at
-`55aa071b17c825bdb66fac99cde2e7a7acfbdee7`; it should not be presented as a
-standard release based on `rust-v0.137.0`. The `0.137.0-sticky.1` release should
-be prepared on `release/0.137.0-sticky.1` from `rust-v0.137.0`, with only the
-minimal Sticky patchset transplanted; do not tag the current `main` directly.
+Release branches should be prepared from official stable tags, with only the
+minimal Sticky patchset transplanted. For example, `0.138.0-sticky.1` is based
+on `rust-v0.138.0`; do not tag an unsynced maintenance branch as a formal
+Sticky release.
 
 Enable recorded conflict reuse before the first sync:
 
@@ -58,14 +57,14 @@ cargo build --release --bin codex
 If common, core, or protocol crates changed, follow the repo's broader test
 guidance before updating `origin/main`.
 
-Recommended first formal release flow:
+Recommended formal release flow:
 
 ```text
 git fetch upstream --tags
--> git switch -c release/0.137.0-sticky.1 rust-v0.137.0
+-> git switch -c release/0.138.0-sticky.1 rust-v0.138.0
 -> transplant the minimal Sticky patchset
 -> test and package locally
--> create and push 0.137.0-sticky.1 only after review
+-> create and push 0.138.0-sticky.1 only after review
 -> draft a GitHub Release manually
 -> upload the tar.gz archive and SHA256SUMS
 -> publish after verifying the draft assets
@@ -74,10 +73,10 @@ git fetch upstream --tags
 Releases are built locally and uploaded manually. The former GitHub Actions release workflow has been removed. Current published artifacts are limited to the Linux x86_64 GNU
 package.
 
-Do not create a release tag from the current initial migration, and do not name
-the current `main` code `0.137.0-sticky.1`. Later releases should explicitly
-sync an official stable tag before creating `<upstream-version>-sticky.<n>`. Do
-not overwrite an already published tag; use the next Sticky revision for rebuilds.
+Do not create a release tag from an unsynced maintenance branch. Releases should
+explicitly sync an official stable tag before creating
+`<upstream-version>-sticky.<n>`. Do not overwrite an already published tag; use
+the next Sticky revision for rebuilds.
 
 ## Baseline Updates
 

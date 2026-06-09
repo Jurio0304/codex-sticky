@@ -14,6 +14,8 @@ Codex Sticky keeps the Codex experience close to upstream while making long term
 
 ## 📰 News
 
+2026-06-09 ⬆️ `0.138.0-sticky.1` syncs to OpenAI Codex `0.138.0` / upstream tag `rust-v0.138.0` while keeping the Sticky Transcript patchset.
+
 2026-06-08 🖱️ `0.137.0-sticky.2` adds bottom-composer mouse drag selection/copy, sticky mouse routing, and a best-effort text pointer hint.
 
 2026-06-05 📌 `0.137.0-sticky.1` introduced Sticky Transcript as a side-by-side Codex CLI release for Linux x86_64 GNU.
@@ -47,10 +49,10 @@ Codex Sticky is most useful if you:
 
 ## 🧭 Current Support And Limits
 
-Current formal release: `0.137.0-sticky.2`.
+Current formal release: `0.138.0-sticky.1`.
 
-- `0.137.0` means the release is based on OpenAI Codex `0.137.0` / upstream tag `rust-v0.137.0`.
-- `-sticky.2` means the second Sticky enhancement revision on top of that upstream version.
+- `0.138.0` means the release is based on OpenAI Codex `0.138.0` / upstream tag `rust-v0.138.0`.
+- `-sticky.1` means the first Sticky enhancement revision on top of that upstream version.
 
 Supported today:
 
@@ -125,19 +127,19 @@ To pin the current release explicitly:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Jurio0304/codex-sticky/main/scripts/install.sh \
   -o install-codex-sticky.sh
-CODEX_STICKY_VERSION=0.137.0-sticky.2 bash install-codex-sticky.sh
+CODEX_STICKY_VERSION=0.138.0-sticky.1 bash install-codex-sticky.sh
 ```
 
 ### Option C: Install The Release Package Manually
 
 Download the release assets from:
 
-<https://github.com/Jurio0304/codex-sticky/releases/tag/0.137.0-sticky.2>
+<https://github.com/Jurio0304/codex-sticky/releases/tag/0.138.0-sticky.1>
 
 You need:
 
 ```text
-codex-sticky-0.137.0-sticky.2-x86_64-unknown-linux-gnu.tar.gz
+codex-sticky-0.138.0-sticky.1-x86_64-unknown-linux-gnu.tar.gz
 SHA256SUMS
 ```
 
@@ -147,7 +149,7 @@ Verify and install:
 sha256sum -c SHA256SUMS
 
 mkdir -p ~/.local/bin ~/.local/libexec
-tar -xzf codex-sticky-0.137.0-sticky.2-x86_64-unknown-linux-gnu.tar.gz
+tar -xzf codex-sticky-0.138.0-sticky.1-x86_64-unknown-linux-gnu.tar.gz
 install -m 755 codex-sticky ~/.local/bin/codex-sticky
 install -m 755 libexec/codex-sticky-bin ~/.local/libexec/codex-sticky-bin
 chmod 755 ~/.local/bin/codex-sticky
@@ -249,9 +251,9 @@ Codex Sticky is a small enhancement, not a full replacement. Installing official
 
 The first formal release focuses on the environment this fork is meant to serve best: terminal, SSH, tmux, and remote Linux server workflows. macOS, Windows, ARM64, musl, and broader release automation are deferred until they can be supported without expanding maintenance cost too much.
 
-### 4. Why does `codex-sticky --version` show `codex-sticky 0.137.0-sticky.2`?
+### 4. Why does `codex-sticky --version` show `codex-sticky 0.138.0-sticky.1`?
 
-The installed command wraps the upstream-based binary so the command version matches the Sticky release tag. The underlying Rust workspace version still tracks the upstream Codex CLI base version, for example `0.137.0`.
+The installed command wraps the upstream-based binary so the command version matches the Sticky release tag. The underlying Rust workspace version still tracks the upstream Codex CLI base version, for example `0.138.0`.
 
 ### 5. Will Codex Sticky sync OpenAI Codex updates?
 

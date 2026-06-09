@@ -3,7 +3,7 @@ set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "$script_dir/.." && pwd)"
-sticky_version="${CODEX_STICKY_VERSION:-0.137.0-sticky.2}"
+sticky_version="${CODEX_STICKY_VERSION:-0.138.0-sticky.1}"
 
 cd "$repo_root/codex-rs"
 cargo build --release --bin codex
