@@ -20,7 +20,7 @@ use ratatui::widgets::Block;
 use ratatui::widgets::Clear;
 use ratatui::widgets::Paragraph;
 use ratatui::widgets::Widget;
-use unicode_width::UnicodeWidthChar;
+use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
 use crate::bottom_pane::BottomPaneMouseAction;
@@ -687,9 +687,12 @@ fn render_selection_overlay(area: Rect, buf: &mut Buffer, state: &StickyTranscri
 
     for visible_row in 0..area.height {
         let transcript_row = snapshot.viewport_start_row + usize::from(visible_row);
-        let Some((start, end)) =
-            selection_columns_for_row(selection, transcript_row, usize::from(area.width))
-        else {
+        let Some((start, end)) = selection_columns_for_row(
+            selection,
+            &snapshot.rows,
+            transcript_row,
+            usize::from(area.width),
+        ) else {
             continue;
         };
         let start = start.min(usize::from(area.width));
@@ -711,6 +714,7 @@ fn render_selection_overlay(area: Rect, buf: &mut Buffer, state: &StickyTranscri
 
 fn selection_columns_for_row(
     selection: &TranscriptSelection,
+    rows: &[StickyTranscriptRow],
     row: usize,
     viewport_width: usize,
 ) -> Option<(usize, usize)> {
@@ -720,13 +724,19 @@ fn selection_columns_for_row(
     }
 
     if start.row == end.row {
-        return Some((start.column, end.column));
+        return Some((
+            start.column,
+            end_column_for_selected_cell(rows, end.row, end.column, viewport_width),
+        ));
     }
     if row == start.row {
         return Some((start.column, viewport_width));
     }
     if row == end.row {
-        return Some((0, end.column));
+        return Some((
+            0,
+            end_column_for_selected_cell(rows, end.row, end.column, viewport_width),
+        ));
     }
     Some((0, viewport_width))
 }
@@ -746,14 +756,10 @@ fn selected_text_from_rows(
             break;
         };
         let row_width = UnicodeWidthStr::width(row.text.as_str());
-        let (start_column, end_column) = if start.row == end.row {
-            (start.column, end.column)
-        } else if row_index == start.row {
-            (start.column, row_width)
-        } else if row_index == end.row {
-            (0, end.column)
-        } else {
-            (0, row_width)
+        let Some((start_column, end_column)) =
+            selection_columns_for_row(selection, rows, row_index, row_width)
+        else {
+            continue;
         };
 
         let start_byte = byte_index_for_column(&row.text, start_column.min(row_width));
@@ -768,20 +774,45 @@ fn selected_text_from_rows(
     selected.join("\n")
 }
 
+fn end_column_for_selected_cell(
+    rows: &[StickyTranscriptRow],
+    row: usize,
+    column: usize,
+    max_column: usize,
+) -> usize {
+    let Some(row) = rows.get(row) else {
+        return column.min(max_column);
+    };
+    let row_width = UnicodeWidthStr::width(row.text.as_str());
+    if column >= row_width {
+        return column.saturating_add(1).min(max_column);
+    }
+
+    let mut width = 0usize;
+    for grapheme in row.text.graphemes(true) {
+        let next_width = width + UnicodeWidthStr::width(grapheme);
+        if column < next_width {
+            return next_width.min(max_column);
+        }
+        width = next_width;
+    }
+    row_width.min(max_column)
+}
+
 fn byte_index_for_column(text: &str, column: usize) -> usize {
     if column == 0 {
         return 0;
     }
 
     let mut width = 0usize;
-    for (idx, ch) in text.char_indices() {
-        let ch_width = UnicodeWidthChar::width(ch).unwrap_or(0);
-        if width + ch_width > column {
+    for (idx, grapheme) in text.grapheme_indices(true) {
+        let grapheme_width = UnicodeWidthStr::width(grapheme);
+        if width + grapheme_width > column {
             return idx;
         }
-        width += ch_width;
+        width += grapheme_width;
         if width == column {
-            return idx + ch.len_utf8();
+            return idx + grapheme.len();
         }
     }
     text.len()
