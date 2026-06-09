@@ -132,7 +132,71 @@ fn sticky_selection_drag_release_extracts_multiline_text() {
             /*column*/ 3,
             /*row*/ 1,
         )),
-        StickyMouseAction::CopySelection("lpha\nbet".to_string())
+        StickyMouseAction::CopySelection("lpha\nbeta".to_string())
+    );
+}
+
+#[test]
+fn sticky_selection_includes_last_selected_character() {
+    let state = StickyTranscriptState::new(/*enabled*/ true);
+    seed_rows(&state, &["hello!"]);
+
+    assert_eq!(
+        state.handle_mouse_event(mouse(
+            MouseEventKind::Down(MouseButton::Left),
+            /*column*/ 0,
+            /*row*/ 0,
+        )),
+        StickyMouseAction::Redraw
+    );
+    assert_eq!(
+        state.handle_mouse_event(mouse(
+            MouseEventKind::Drag(MouseButton::Left),
+            /*column*/ 5,
+            /*row*/ 0,
+        )),
+        StickyMouseAction::Redraw
+    );
+
+    assert_eq!(
+        state.handle_mouse_event(mouse(
+            MouseEventKind::Up(MouseButton::Left),
+            /*column*/ 5,
+            /*row*/ 0,
+        )),
+        StickyMouseAction::CopySelection("hello!".to_string())
+    );
+}
+
+#[test]
+fn sticky_selection_includes_last_selected_character_when_dragging_backward() {
+    let state = StickyTranscriptState::new(/*enabled*/ true);
+    seed_rows(&state, &["hello!"]);
+
+    assert_eq!(
+        state.handle_mouse_event(mouse(
+            MouseEventKind::Down(MouseButton::Left),
+            /*column*/ 5,
+            /*row*/ 0,
+        )),
+        StickyMouseAction::Redraw
+    );
+    assert_eq!(
+        state.handle_mouse_event(mouse(
+            MouseEventKind::Drag(MouseButton::Left),
+            /*column*/ 0,
+            /*row*/ 0,
+        )),
+        StickyMouseAction::Redraw
+    );
+
+    assert_eq!(
+        state.handle_mouse_event(mouse(
+            MouseEventKind::Up(MouseButton::Left),
+            /*column*/ 0,
+            /*row*/ 0,
+        )),
+        StickyMouseAction::CopySelection("hello!".to_string())
     );
 }
 
@@ -154,5 +218,5 @@ fn sticky_selection_text_trims_trailing_padding_and_handles_unicode_columns() {
         active: false,
     };
 
-    assert_eq!(selected_text_from_rows(&rows, &selection), "  padded\n中a");
+    assert_eq!(selected_text_from_rows(&rows, &selection), "  padded\n中ab");
 }
