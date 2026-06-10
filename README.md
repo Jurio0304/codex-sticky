@@ -207,6 +207,46 @@ Inside the TUI, Sticky Transcript can also be toggled for the current session:
 /sticky status
 ```
 
+### tmux, Mouse, And OSC52 Clipboard
+
+If you use Codex Sticky inside tmux with mouse support, configure tmux to allow
+OSC52 clipboard forwarding:
+
+```tmux
+set -g mouse on
+set -g allow-passthrough on
+set -g set-clipboard on
+set -as terminal-features ',*:clipboard'
+```
+
+For a stricter setup, replace `*` with the outer terminal name reported by:
+
+```bash
+tmux display-message -p '#{client_termname}'
+```
+
+Reload tmux after changing `~/.tmux.conf`:
+
+```bash
+tmux source-file ~/.tmux.conf
+```
+
+When tmux mouse mode and Sticky Transcript mouse selection are both active,
+dragging text is handled by the terminal app instead of the terminal's native
+selection path. Use `Shift` + drag when you want terminal-native selection, or
+use tmux copy mode if that is your normal workflow. Clipboard writes also depend
+on the outer terminal allowing OSC52 / application clipboard access.
+
+To test OSC52 passthrough from inside tmux:
+
+```bash
+payload=$(printf 'codex-sticky-osc52-test' | base64 | tr -d '\n')
+printf '\033Ptmux;\033\033]52;c;%s\a\033\\' "$payload"
+```
+
+After running the command, paste somewhere else. The pasted text should be
+`codex-sticky-osc52-test`.
+
 ## ⬆️ Updating
 
 Use the installer again when a later Sticky release is published:

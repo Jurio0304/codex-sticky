@@ -207,6 +207,44 @@ codex-sticky --version
 /sticky status
 ```
 
+### tmux、鼠标与 OSC52 剪贴板
+
+如果你在 tmux 中使用 Codex Sticky，并开启 tmux 鼠标支持，建议允许 tmux
+转发 OSC52 剪贴板写入：
+
+```tmux
+set -g mouse on
+set -g allow-passthrough on
+set -g set-clipboard on
+set -as terminal-features ',*:clipboard'
+```
+
+如果想配置得更精确，可以把 `*` 换成外层终端名称。进入 tmux 后用下面命令查看：
+
+```bash
+tmux display-message -p '#{client_termname}'
+```
+
+修改 `~/.tmux.conf` 后重新加载：
+
+```bash
+tmux source-file ~/.tmux.conf
+```
+
+当 tmux mouse mode 和 Sticky Transcript 鼠标选择同时启用时，拖拽文本会先被终端应用处理，
+不会走终端原生选择路径。如果你需要终端原生选择，可以使用 `Shift` + 拖拽；如果习惯
+tmux copy mode，也可以继续使用 tmux 的复制流程。剪贴板写入还取决于外层终端是否允许
+OSC52 / 应用访问剪贴板。
+
+可以在 tmux 内用下面命令测试 OSC52 passthrough：
+
+```bash
+payload=$(printf 'codex-sticky-osc52-test' | base64 | tr -d '\n')
+printf '\033Ptmux;\033\033]52;c;%s\a\033\\' "$payload"
+```
+
+执行后到其他地方粘贴，应该得到 `codex-sticky-osc52-test`。
+
 ## ⬆️ 更新
 
 后续 Sticky 版本发布后，可以再次运行安装脚本：
