@@ -310,3 +310,7 @@ Codex Sticky is an unofficial community fork of OpenAI Codex CLI. It is not an O
 ## 📄 License
 
 This repository is licensed under the [Apache-2.0 License](LICENSE).
+
+## 🤝 Community
+
+This project actively participates in and recognizes the [linux.do community](https://linux.do).

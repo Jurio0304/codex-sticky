@@ -308,3 +308,7 @@ Codex Sticky 是 OpenAI Codex CLI 的非官方社区 fork。它不是 OpenAI 产
 ## 📄 许可证
 
 本仓库使用 [Apache-2.0 License](LICENSE)。
+
+## 🤝 社区
+
+本项目积极参与并认可 [linux.do社区](https://linux.do)。
