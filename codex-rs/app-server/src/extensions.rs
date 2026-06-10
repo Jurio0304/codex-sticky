@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::sync::Weak;
 
+use codex_analytics::AnalyticsEventsClient;
 use codex_app_server_protocol::ServerNotification;
 use codex_app_server_protocol::ThreadGoal;
 use codex_app_server_protocol::ThreadGoalUpdatedNotification;
@@ -30,8 +31,10 @@ pub(crate) fn thread_extensions<S>(
     event_sink: Arc<dyn ExtensionEventSink>,
     auth_manager: Arc<AuthManager>,
     state_db: Option<StateDbHandle>,
+    analytics_events_client: AnalyticsEventsClient,
     thread_manager: Weak<ThreadManager>,
     goal_service: Arc<GoalService>,
+    executor_skill_provider: Arc<dyn codex_skills_extension::SkillProvider>,
 ) -> Arc<ExtensionRegistry<Config>>
 where
     S: AgentSpawner<StartThreadOptions, Spawned = NewThread, Error = CodexErr> + 'static,
@@ -41,6 +44,7 @@ where
         codex_goal_extension::install_with_backend(
             &mut builder,
             state_db,
+            analytics_events_client,
             codex_otel::global(),
             thread_manager,
             goal_service,
@@ -49,8 +53,14 @@ where
     }
     codex_guardian::install(&mut builder, guardian_agent_spawner);
     codex_memories_extension::install(&mut builder, codex_otel::global());
+    codex_mcp_extension::install(&mut builder);
     codex_web_search_extension::install(&mut builder, auth_manager.clone());
     codex_image_generation_extension::install(&mut builder, auth_manager);
+    codex_skills_extension::install_with_providers(
+        &mut builder,
+        codex_skills_extension::SkillProviders::new()
+            .with_executor_provider(executor_skill_provider),
+    );
     Arc::new(builder.build())
 }
 
@@ -133,7 +143,6 @@ pub(crate) fn guardian_agent_spawner(
 mod tests {
     use std::time::Duration;
 
-    use codex_analytics::AnalyticsEventsClient;
     use codex_protocol::protocol::ThreadGoal as CoreThreadGoal;
     use codex_protocol::protocol::ThreadGoalStatus;
     use codex_protocol::protocol::ThreadGoalUpdatedEvent;

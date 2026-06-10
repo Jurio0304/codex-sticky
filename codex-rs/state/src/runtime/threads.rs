@@ -521,6 +521,7 @@ ON CONFLICT(id) DO NOTHING
         .bind(
             metadata
                 .thread_source
+                .as_ref()
                 .map(codex_protocol::protocol::ThreadSource::as_str),
         )
         .bind(metadata.agent_nickname.as_deref())
@@ -753,6 +754,7 @@ ON CONFLICT(id) DO UPDATE SET
         .bind(
             metadata
                 .thread_source
+                .as_ref()
                 .map(codex_protocol::protocol::ThreadSource::as_str),
         )
         .bind(metadata.agent_nickname.as_deref())
@@ -889,7 +891,7 @@ ON CONFLICT(id) DO UPDATE SET
         let rows_affected = result.rows_affected();
         self.memories.delete_thread_memory(thread_id).await?;
         if rows_affected > 0 {
-            self.thread_goals.delete_thread_goal(thread_id).await?;
+            let _ = self.thread_goals.delete_thread_goal(thread_id).await?;
         }
         Ok(rows_affected)
     }
