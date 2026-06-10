@@ -30,13 +30,17 @@ Codex Sticky 尽量贴近上游 Codex CLI，只补上长终端会话里最影响
 
 ## 🎬 演示
 
-【TODO：在 `docs/assets/readme/codex-sticky-demo.gif` 添加顶部终端演示 GIF】
+### Sticky Transcript 效果对比
 
-【TODO：在 `docs/assets/readme/sticky-transcript-before-after.png` 添加 Sticky Transcript 前后对比图】
+![Sticky Transcript 在翻看较早输出时保持 composer 可用](docs/assets/readme/sticky-before-after.png)
 
-【TODO：在 `docs/assets/readme/tmux-ssh-demo-thumbnail.png` 添加 tmux / SSH 演示视频缩略图】
+### 终端工作流
 
-目前不引用不存在的图片，避免 GitHub 出现破图。
+![Codex Sticky 终端演示](docs/assets/readme/codex-sticky-demo.gif)
+
+### tmux 工作流
+
+![Codex Sticky tmux 演示](docs/assets/readme/tmux-demo.gif)
 
 ## 👤 适合谁
 

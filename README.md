@@ -30,13 +30,17 @@ Codex Sticky keeps the Codex experience close to upstream while making long term
 
 ## 🎬 Demo
 
-【TODO: Add terminal demo GIF at `docs/assets/readme/codex-sticky-demo.gif`】
+### Sticky Transcript At A Glance
 
-【TODO: Add Sticky Transcript before/after comparison at `docs/assets/readme/sticky-transcript-before-after.png`】
+![Sticky Transcript keeps the composer available while older output scrolls](docs/assets/readme/sticky-before-after.png)
 
-【TODO: Add tmux / SSH demo video thumbnail at `docs/assets/readme/tmux-ssh-demo-thumbnail.png`】
+### Terminal Workflow
 
-No missing images are referenced yet.
+![Codex Sticky terminal demo](docs/assets/readme/codex-sticky-demo.gif)
+
+### tmux Workflow
+
+![Codex Sticky tmux demo](docs/assets/readme/tmux-demo.gif)
 
 ## 👤 Who It Is For
 
